@@ -1,0 +1,19 @@
+{
+  "domains": {
+    "context": { "state": "active", "updatedAt": null },
+    "experience": { "state": "active", "updatedAt": null },
+    "goals": { "state": "active", "updatedAt": null },
+    "values": { "state": "active", "updatedAt": null },
+    "constraints": { "state": "withheld", "updatedAt": "2026-01-10T08:00:00.000Z" },
+    "preferences": { "state": "active", "updatedAt": null }
+  },
+  "records": [
+    { "id": "demo-context", "domain": "context", "content": "目前在做产品设计，也在探索独立创作。希望工作与生活都留一点余地。", "source": { "type": "user", "reference": "虚构人物的示例回答" }, "status": "confirmed", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": "2026-01-10T08:00:00.000Z" },
+    { "id": "demo-experience", "domain": "experience", "content": "曾参与一个社区阅读项目，可能擅长把复杂信息整理成清晰的内容。", "source": { "type": "codex-memory", "reference": "虚构的旧记忆摘要" }, "status": "imported", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": null },
+    { "id": "demo-goal", "domain": "goals", "content": "接下来三个月，完成一个能给真实用户使用的小作品。先跑通，再决定是否投入更多时间。", "source": { "type": "user", "reference": "虚构人物的示例回答" }, "status": "confirmed", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": "2026-01-10T08:00:00.000Z" },
+    { "id": "demo-preference", "domain": "preferences", "content": "先给出具体建议，再解释原因。遇到不同意见可以直接指出，但请说明依据。", "source": { "type": "user", "reference": "虚构人物的示例回答" }, "status": "confirmed", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": "2026-01-10T08:00:00.000Z" }
+  ],
+  "drafts": [
+    { "id": "demo-draft", "domain": "values", "content": "正在思考：自主安排时间和收入稳定，现阶段更看重哪一个。", "source": { "type": "user", "reference": "虚构的问答进度" }, "status": "inferred", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": null }
+  ]
+}

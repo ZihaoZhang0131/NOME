@@ -1,0 +1,17 @@
+{
+  "name": "nome-skill",
+  "version": "0.1.0",
+  "description": "A local, user-controlled personal context skill for Codex and Claude Code.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "bin": { "nome": "skills/nome/scripts/nome.mjs" },
+  "files": ["skills/nome/", "README.md"],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "start": "node skills/nome/scripts/nome.mjs serve --open",
+    "demo": "node skills/nome/scripts/nome.mjs serve --demo --open",
+    "check": "node scripts/check.mjs",
+    "pack": "node scripts/pack.mjs"
+  }
+}

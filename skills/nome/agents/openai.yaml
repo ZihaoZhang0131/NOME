@@ -1,0 +1,6 @@
+interface:
+  display_name: "NOME · 了解我"
+  short_description: "通过个人档案与渐进问答了解你，仅在你明确要求时保存更新，支持本地可视化"
+  default_prompt: "使用 $nome 初始化我的个人档案，先整理可用记忆，再让我确认。"
+policy:
+  allow_implicit_invocation: true
