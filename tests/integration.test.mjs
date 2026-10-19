@@ -74,6 +74,18 @@ test('read-only server reflects actual updates and rejects HTTP writes and cross
   const dir = path.join(await temporary(t), 'data'); const running = await startServer({ dataDir: dir, port: 0 }); t.after(() => running.close());
   assert.equal(running.server.address().address, '127.0.0.1');
   const page = await fetch(running.url); assert.equal(page.status, 200); assert.match(await page.text(), /个人档案/);
+  const presentation = await fetch(`${running.url}/profile-view.js`);
+  assert.equal(presentation.status, 200); assert.match(presentation.headers.get('content-type'), /javascript/);
+  assert.match(await presentation.text(), /export function profileView/);
+  for (const file of ['sun', 'mercury', 'venus_atmosphere', 'earth_daymap', 'earth_clouds', 'mars', 'jupiter', 'saturn']) {
+    const texture = await fetch(`${running.url}/textures/2k_${file}.jpg`);
+    assert.equal(texture.status, 200); assert.equal(texture.headers.get('content-type'), 'image/jpeg');
+    const bytes = new Uint8Array(await texture.arrayBuffer());
+    assert.equal(bytes[0], 255); assert.equal(bytes[1], 216);
+  }
+  const ring = await fetch(`${running.url}/textures/2k_saturn_ring_alpha.png`);
+  assert.equal(ring.status, 200); assert.equal(ring.headers.get('content-type'), 'image/png');
+  assert.match(await (await fetch(`${running.url}/textures/CREDITS.md`)).text(), /CC BY 4.0/);
   const initial = await (await fetch(`${running.url}/api/profile`)).json(); assert.equal(initial.revision, 0); assert.equal(initial.demo, false);
   await assert.rejects(fs.stat(dir), { code: 'ENOENT' });
   assert.equal((await fetch(`${running.url}/api/profile`, { method: 'POST' })).status, 405);

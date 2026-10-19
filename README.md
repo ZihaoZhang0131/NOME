@@ -14,13 +14,13 @@ NOME 是一个支持 Codex 和 Claude Code 的本地 Skill：从可用记忆初�
 npm run demo
 ```
 
-浏览器打开带“虚构示例”标记的页面，不会读取你的档案。Ctrl+C 停止服务。查看真实档案（尚未初始化时为空）：
+浏览器打开演示星图，进入领域后显示“虚构示例”标记，不会读取你的档案。Ctrl+C 停止服务。查看真实档案（尚未初始化时为空）：
 
 ```sh
 npm start
 ```
 
-页面只供查看、按领域筛选与刷新；输入和问答都在 Agent 对话中完成。
+首页是一张全屏个人星图。点击六个领域节点，桌面会在星图右侧展开内容，手机切换为阅读页面；记录的来源与确认时间可以按需展开。支持返回星图、领域切换、浏览器前后导航和键盘操作；输入和问答都在 Agent 对话中完成。
 
 ## 安装给 Agent
 
@@ -118,3 +118,5 @@ nome uninstall --agent both
 代码使用可移植 API，浏览器打开适配 macOS、Linux 和 Windows 的常见命令；当前交付的实际验证以源码中的 docs/verification.md 为准。自动化测试验证程序行为，不能证明模型一定遵守问答策略或一定隐式触发；相关真实问法见源码中的 evals/scenarios.md。分发包不包含开发验证资料，源码仓库包含。
 
 开发目录：`skills/nome/` 为自包含可安装 Skill（入口、参考文件、CLI 与页面），`tests/` 为隔离测试，`scripts/` 为检查与打包工具。
+
+行星材质采用 Solar System Scope / INOVE 的 CC BY 4.0 贴图：[原始来源](https://www.solarsystemscope.com/textures/)，[本地素材与改动说明](skills/nome/assets/textures/CREDITS.md)。图像随 Skill 分发，页面不访问外部素材服务。

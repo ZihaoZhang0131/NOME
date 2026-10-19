@@ -3,48 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="dark">
   <title>NOME · 个人档案</title>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
-  <script src="/app.js" defer></script>
+  <script src="/app.js" type="module"></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">跳到档案内容</a>
-  <div class="layout">
-    <aside class="sidebar">
-      <a class="brand" href="/" aria-label="NOME 首页"><span class="brand-mark" aria-hidden="true">n.</span><span>NOME</span></a>
-      <p class="sidebar-caption">关于你，慢慢了解。</p>
-      <p class="nav-label">个人档案</p>
-      <nav id="navigation" aria-label="按领域筛选"></nav>
-      <div class="sidebar-bottom"><span class="local-dot" aria-hidden="true"></span>本机档案<span class="version">v0.1</span></div>
-    </aside>
-    <main id="main" tabindex="-1">
-      <header class="topbar">
-        <span class="breadcrumb">NOME <span>/</span> 个人档案</span>
-        <div class="topbar-actions"><span id="demo-badge" class="demo-badge" hidden>虚构示例</span><button id="refresh" class="refresh" type="button"><span aria-hidden="true">↻</span> 刷新</button></div>
-      </header>
-      <div class="content">
-        <section class="intro" aria-labelledby="page-title">
-          <p class="eyebrow">YOUR PERSONAL CONTEXT</p>
-          <h1 id="page-title">让协作，从了解你开始。</h1>
-          <p class="intro-copy">这里记录你愿意让 Agent 了解的事。由你补充，也由你决定何时改变。</p>
-        </section>
-        <p id="error" class="error" role="alert" hidden></p>
-        <div id="loading" class="loading" role="status">正在读取本机档案…</div>
-        <div id="dashboard" hidden>
-          <section class="overview" aria-label="了解情况">
-            <div class="overview-main"><span id="coverage" class="coverage">0 <small>/ 6</small></span><div><p class="overview-label">个领域已有确认资料</p><p id="coverage-note" class="muted">从你现在最关心的事情开始就好。</p></div></div>
-            <div class="overview-side"><div><strong id="pending-count">0</strong><span>条待核实</span></div><div><strong id="draft-count">0</strong><span>条草稿</span></div></div>
-            <div id="coverage-track" class="coverage-track" aria-hidden="true"></div>
-          </section>
-          <div class="section-heading"><h2 id="section-title">了解你的六个方面</h2><span id="updated" class="muted"></span></div>
-          <div id="domains" class="domains"></div>
-          <section class="next-step" aria-labelledby="next-title"><span class="next-icon" aria-hidden="true">↗</span><div><h2 id="next-title">想补充一点，或改变一点？</h2><p>回到 Agent 对话，说「进入 NOME 问答模式」或「帮我更新个人档案」。这里仅供查看。</p></div></section>
-          <footer><span>了解可以慢慢发生，不必填满每个领域。</span><span id="revision"></span></footer>
+  <main id="main">
+    <h1 class="sr-only">NOME · 个人星图</h1>
+    <p id="loading" class="loading" role="status">正在读取星图…</p>
+    <section id="error" class="error" role="alert" hidden>
+      <h2>暂时无法读取。</h2><p id="error-message"></p><p class="muted">检查本机服务后，重新加载页面。</p>
+      <button id="retry" class="text-button" type="button">重新读取</button>
+    </section>
+    <div id="dashboard" class="universe" hidden>
+      <section class="star-stage" aria-label="个人星图">
+        <div id="atlas" class="atlas" role="group" aria-label="选择一个领域，探索你的档案"></div>
+      </section>
+      <section id="detail" class="reading" aria-labelledby="detail-title" hidden>
+        <div class="reading-toolbar">
+          <button id="back-to-atlas" class="text-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg>返回星图</button>
+          <p id="demo-note" class="demo-note" hidden>虚构示例</p>
         </div>
-      </div>
-    </main>
-  </div>
+        <div class="detail-content">
+          <h2 id="detail-title" tabindex="-1"></h2>
+          <p id="detail-description" class="detail-description"></p>
+          <div id="detail-records"></div>
+        </div>
+        <nav id="domain-nav" class="domain-nav" aria-label="切换档案领域"></nav>
+      </section>
+    </div>
+    <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+  </main>
 </body>
 </html>
