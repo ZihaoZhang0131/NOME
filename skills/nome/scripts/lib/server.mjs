@@ -3,14 +3,15 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { readStore } from './store.mjs';
-import { newStore, view, validateStore } from './model.mjs';
+import { readProfile } from './store.mjs';
+import { profileView, documentPath, markdown } from './model.mjs';
 
 const assetRoot = fileURLToPath(new URL('../../assets/', import.meta.url));
 const resources = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/profile-view.js', ['profile-view.js', 'text/javascript; charset=utf-8']],
+  ['/markdown.js', ['markdown.js', 'text/javascript; charset=utf-8']],
   ['/orbit.js', ['orbit.js', 'text/javascript; charset=utf-8']],
   ['/camera.js', ['camera.js', 'text/javascript; charset=utf-8']],
   ['/planet-material.js', ['planet-material.js', 'text/javascript; charset=utf-8']],
@@ -23,11 +24,11 @@ const resources = new Map([
 ]);
 export async function startServer({ dataDir, demo = false, port = 43821 } = {}) {
   const assets = new Map(await Promise.all([...resources].map(async ([route, [file, type]]) => [route, { body: await fs.readFile(path.join(assetRoot, file)), type }])));
-  let demoStore;
+  let demoProfile;
   if (demo) {
-    demoStore = newStore();
-    demoStore.profile = JSON.parse(await fs.readFile(path.join(assetRoot, 'demo.json'), 'utf8'));
-    validateStore(demoStore);
+    const documents = JSON.parse(await fs.readFile(path.join(assetRoot, 'demo.json'), 'utf8'));
+    for (const doc of documents) { documentPath(doc.path); markdown(doc.markdown); }
+    demoProfile = profileView(documents);
   }
   const server = http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -45,8 +46,9 @@ export async function startServer({ dataDir, demo = false, port = 43821 } = {}) 
     const route = new URL(req.url, `http://${expectedHost}`).pathname;
     try {
       if (route === '/api/profile') {
-        const store = demoStore || await readStore(dataDir);
-        return reply(200, { ...view(store, { drafts: true }), demo, version: '0.1.0' });
+        const profile = demoProfile || profileView((await readProfile(dataDir)).documents);
+        const { hash, ...body } = profile;
+        return reply(200, { ...body, demo });
       }
       if (route === '/health') return reply(200, { ok: true, mode: demo ? 'demo' : 'local' });
       const asset = assets.get(route);

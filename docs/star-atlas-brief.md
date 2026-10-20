@@ -8,11 +8,11 @@ THESIS: 六个生活领域围绕同一个人，星图同时是领域筛选器。
 
 OWN-WORLD: 深墨绿背景、温白文字、太阳与六颗具有不同地貌、云带、星环的行星。六颗行星沿同一条倾斜轨道公转；记录用清晰的分栏和横线组织。
 
-STORY: 探索星图 → 点击领域节点 → 阅读该领域记录及来源 → 返回星图。未知、待核实、草稿和主动留白在阅读视图中用文字区分。
+STORY: 探索星图 → 点击领域节点 → 阅读完整 Markdown 与章节 → 返回星图。仅展示正式正文，不呈现记录状态、来源或操作时间。
 
 FIRST VIEWPORT: 首页仅展示全屏星图，保留六类全名标签与中心 NOME，不出现标题、描述、卡片、导航栏和页脚。悬停或键盘聚焦领域时行星本体平滑放大 18%（180ms），不新增外圈，中心显示该领域。点击后镜头连续接近选中行星，放大到桌面左侧，右侧展开阅读；手机上方展示近景、下方阅读。支持返回星图、浏览器前后导航与领域深链接。减少动态效果设置下静态呈现。
 
-FORM: 用户明确指定的个人星图；无需随机选择视觉方向。引擎不可用，seed: none (unavailable)。领域节点为原生按钮，阅读视图保留六领域切换与来源折叠。
+FORM: 用户明确指定的个人星图；无需随机选择视觉方向。引擎不可用，seed: none (unavailable)。领域节点为原生按钮，阅读视图保留六领域切换与多文档章节导航。
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 

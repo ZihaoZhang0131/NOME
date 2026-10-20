@@ -1,6 +1,6 @@
 interface:
   display_name: "NOME · 了解我"
-  short_description: "通过个人档案与渐进问答了解你，仅在你明确要求时保存更新，支持本地可视化"
-  default_prompt: "使用 $nome 初始化我的个人档案，先整理可用记忆，再让我确认。"
+  short_description: "通过 Markdown 档案与全面问答了解你，按明确请求保存，支持本地星图阅读"
+  default_prompt: "使用 $nome 初始化我的个人档案，先利用已有记忆，找不到时让我指定其他来源或直接补充。"
 policy:
   allow_implicit_invocation: true

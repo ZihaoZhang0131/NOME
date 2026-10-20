@@ -94,7 +94,7 @@
         ],
         "tonalRampNote": "仅供面板预览：依据源码颜色合成的同色相 OKLCH 明度阶梯，不是应用中的新增色值。"
       },
-      "pending": {
+      "example": {
         "role": "secondary",
         "displayName": "暖沙",
         "tonalRamp": [
@@ -106,21 +106,6 @@
           "oklch(72.14% 0.07686 80.77)",
           "oklch(83.57% 0.07686 80.77)",
           "oklch(95.00% 0.07686 80.77)"
-        ],
-        "tonalRampNote": "仅供面板预览：依据源码颜色合成的同色相 OKLCH 明度阶梯，不是应用中的新增色值。"
-      },
-      "draft": {
-        "role": "secondary",
-        "displayName": "浅紫",
-        "tonalRamp": [
-          "oklch(15.00% 0.05997 300.31)",
-          "oklch(26.43% 0.05997 300.31)",
-          "oklch(37.86% 0.05997 300.31)",
-          "oklch(49.29% 0.05997 300.31)",
-          "oklch(60.71% 0.05997 300.31)",
-          "oklch(72.14% 0.05997 300.31)",
-          "oklch(83.57% 0.05997 300.31)",
-          "oklch(95.00% 0.05997 300.31)"
         ],
         "tonalRampNote": "仅供面板预览：依据源码颜色合成的同色相 OKLCH 明度阶梯，不是应用中的新增色值。"
       }
@@ -141,14 +126,6 @@
       "label": {
         "displayName": "领域短标签",
         "purpose": "节点标签；手机固定 14px。"
-      },
-      "metadata": {
-        "displayName": "来源与时间",
-        "purpose": "记录元数据、描述及领域导航。"
-      },
-      "status": {
-        "displayName": "记录状态",
-        "purpose": "确认、待核实与草稿文字。"
       }
     },
     "shadows": [
@@ -252,23 +229,16 @@
       "css": ".ds-domain-nav{display:flex;flex-wrap:wrap;column-gap:22px;row-gap:8px;margin-top:64px;padding-top:22px;border-top:1px solid var(--line,#29413e)}.ds-domain-tab{padding:10px 0;min-width:44px;min-height:44px;border:0;background:transparent;font-size:13px;color:var(--muted,#a3bab3);cursor:pointer;font-family:'PingFang SC','Microsoft YaHei',-apple-system,sans-serif;}.ds-domain-tab:hover,.ds-domain-tab[aria-current=page]{color:var(--accent,#b9f4ce)}.ds-domain-tab[aria-current=page]{text-decoration:underline;text-underline-offset:8px}.ds-domain-tab:focus-visible{outline:2px solid var(--accent,#b9f4ce);outline-offset:6px;}@media(max-width:760px){.ds-domain-nav{display:grid;grid-template-columns:repeat(3,minmax(44px,1fr));column-gap:16px;margin-top:48px}}"
     },
     {
-      "name": "记录与状态",
+      "name": "Markdown 正文",
       "kind": "custom",
-      "description": "以文字状态与分隔线组织正文，不使用卡片。预览内容为占位示例。",
-      "html": "<article class=\"ds-record\"><p class=\"ds-record-status ds-status-confirmed\">已确认</p><p class=\"ds-record-content\">示例记录正文。</p></article><article class=\"ds-record ds-draft-record\"><p class=\"ds-record-status\">草稿 · 尚未纳入正式档案</p><p class=\"ds-record-content\">示例草稿正文。</p></article>",
-      "css": ".ds-record{color:var(--ink,#edf5ed);font-family:'PingFang SC','Microsoft YaHei',-apple-system,sans-serif;}.ds-record+.ds-record{margin-top:32px;padding-top:28px;border-top:1px solid var(--line,#29413e)}.ds-record-status{margin:0 0 12px;font-size:12px;color:var(--pending,#efd09b)}.ds-status-confirmed{color:var(--accent,#b9f4ce)}.ds-draft-record .ds-record-status{color:var(--draft,#cbbde7)}.ds-record-content{font-size:19px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 20px;max-width:70ch}@media(max-width:760px){.ds-record-content{font-size:18px}}"
-    },
-    {
-      "name": "来源与时间",
-      "kind": "custom",
-      "description": "原生 details 折叠；展开后显示来源与时间字段。",
-      "html": "<details class=\"ds-record-meta\"><summary>来源与时间</summary><dl><dt>来源</dt><dd>你提供的内容</dd><dt>确认时间</dt><dd>尚未确认</dd></dl></details>",
-      "css": ".ds-record-meta{font-size:13px;color:var(--muted,#a3bab3);font-family:'PingFang SC','Microsoft YaHei',-apple-system,sans-serif;}.ds-record-meta summary{cursor:pointer;touch-action:manipulation;width:fit-content;min-height:44px;padding-block:12px}.ds-record-meta summary:focus-visible{outline:2px solid var(--accent,#b9f4ce);outline-offset:6px;}.ds-record-meta dl{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px 12px;margin:12px 0 0;padding-block:18px;border-top:1px solid var(--line,#29413e);line-height:1.7}.ds-record-meta dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}"
+      "description": "完整文档与章节，不呈现来源、操作时间和记录状态。",
+      "html": "<article class=\"ds-markdown\"><h3>成长背景</h3><p>示例经历正文。</p></article>",
+      "css": ".ds-markdown { font-size: 18px; line-height: 1.95; }"
     }
   ],
   "narrative": {
     "northStar": "个人星图",
-    "overview": "深墨绿空间里，六个领域围绕同一个人展开。薄荷色轨道、网格球体和等大的发光节点形成识别语言；星图承担领域选择，不表达人格评分或完成度。\n\n阅读界面延续同一暗色空间，以温白正文、细分隔线和留白承载个人记录。界面只读；确认、待核实、草稿和主动留白有各自明确的文字表达。原生 SVG 与本地字体构成视觉材料，运行时不依赖外部资源。",
+    "overview": "深墨绿个人星图组织六个领域，阅读页直接展示完整 Markdown 与章节导航。页面只读，不表达人格、能力分数或资料完整度。",
     "keyCharacteristics": [
       "深墨绿底色与薄荷色光感。",
       "主星球、六颗卫星和共同的椭圆公转轨道。",
@@ -277,9 +247,9 @@
     ],
     "rules": [
       {
-        "name": "The Explicit State Rule",
-        "body": "颜色辅助区分状态，阅读视图必须保留“已确认”“待核实”“草稿”等文字。",
-        "section": "colors"
+        "name": "The Reading Rule",
+        "body": "页面只保留模块、章节与正文，不展示来源、操作时间、记录状态或覆盖进度。",
+        "section": "layout"
       },
       {
         "name": "The Local Display Rule",
@@ -301,8 +271,8 @@
     "donts": [
       "**Don't** 把节点大小、轨道或亮度解释为人格评分、完成度或能力排名。",
       "**Don't** 在当前首页恢复顶部导航、描述、内容卡片、英文标语或底部引导区。",
-      "**Don't** 只靠颜色区分已确认、待核实、草稿和主动留白。",
-      "**Don't** 把虚构示例资料当成用户真实档案展示。"
+      "**Don't** 把虚构示例资料当成用户真实档案展示。",
+      "不展示来源、操作时间、记录状态与进度统计。"
     ]
   }
 }

@@ -2,86 +2,112 @@
 
 让 Agent 了解你，并由你决定记住什么。
 
-NOME 是一个支持 Codex 和 Claude Code 的本地 Skill：从可用记忆初始化个人档案，通过渐进问答补充了解，在你明确要求时更新，并提供只读的本地可视化页面。
+NOME 是支持 Codex 和 Claude Code 的本地 Skill。从已有记忆建立个人档案，通过全面梳理和持续问答补充了解，在你明确要求时保存。六个领域直接使用 Markdown 文档，浏览器以个人星图组织阅读。
 
-**运行条件：Node.js 22+，本地 Codex 或 Claude Code 的文件与终端访问权限。** 无额外模型 API、数据库、运行时依赖或云端服务。NOME 自身不上传数据；你使用的 Agent 如何处理读取到的内容，仍由其宿主决定。
+需要 **Node.js 22+** 和本地 Agent 的文件、终端访问权限。无额外模型 API、数据库、npm 运行依赖或云端服务。NOME 自身不上传个人数据；Agent 如何处理读取内容由其宿主决定。
 
-## 快速体验
-
-在源码目录运行，不需要 npm install：
+## 安装
 
 ```sh
-npm run demo
+git clone https://github.com/ZihaoZhang0131/NOME.git
+cd NOME
+node skills/nome/scripts/nome.mjs install --agent codex
 ```
 
-浏览器打开演示星图，进入领域后显示“虚构示例”标记，不会读取你的档案。Ctrl+C 停止服务。查看真实档案（尚未初始化时为空）：
+可选 `--agent claude` 或 `--agent both`。默认安装到 `~/.agents/skills/nome/` 和 `~/.claude/skills/nome/`。无需 npm install；安装不读取或导入个人资料。私有仓库需要 GitHub 访问权限。
+
+在后续 Agent 对话中使用：
+
+- Codex：`$nome 初始化我的个人档案`
+- Claude Code：`/nome 初始化我的个人档案`
+- 继续梳理：`进入 NOME 问答模式，全面梳理我的经历与变化。`
+- 保存：`把刚才聊过的内容整理入库。`
+- 更新：`帮我更新个人档案：我现在每周可以拿出四小时学习。`
+- 查看：`帮我启动 NOME 可视化页面。`
+
+隐式触发取决于宿主的技能发现机制；未触发时直接指名 NOME。
+
+## 初始化与问答
+
+初始化优先使用已注入的个人记忆、宿主公开能力和受支持的本地记忆来源。没有可读内容时，Agent 会让你选择指定其他来源，或直接开始补充。可以指定文件、文档或 ChatGPT 网页版记忆摘要；网页读取依赖宿主可用的浏览器和登录状态。
+
+Codex 的本地适配包括已知 Markdown 索引及 memories_1.sqlite 中受支持的记忆摘要表，读取范围有限，不代表全部历史。SQLite 使用 Node 内置能力；该能力不可用或结构未适配时会明确报告。Claude 检查用户和当前项目的 CLAUDE.md，auto memory 目录需明确提供。不会遍历其他项目或全部聊天。
+
+问答先回顾已有内容，再建立模块的整体脉络。经历与变化从成长背景、童年与青少年、求学或进入社会、成年与工作、近期变化逐步展开，不要求用一个小事例概括整个人生。已有较完整内容时，先介绍现状，再讨论最近的更新。可以随时跳过、暂停或长篇讲述。
+
+普通聊天不自动保存。明确说“整理入库”或“保存这一段”即可保存范围清楚的内容，不重复确认。入库就是正式正文，没有待核实、推测或草稿状态。未解决的冲突留在对话，不写进页面。
+
+## Markdown 档案
+
+默认数据目录为 `~/.nome/`，可用 `NOME_DATA_DIR` 或 `--data-dir` 指定其他位置。
+
+```text
+~/.nome/profile/
+  identity/index.md       身份与处境
+  motivation/index.md     动机与价值
+  traits/index.md         特质与偏好
+  capabilities/index.md   能力与经验
+  relationships/index.md  关系与连接
+  growth/index.md         经历与变化
+```
+
+每个领域默认一份完整文档，较长时拆分章节，在 index.md 中以相对链接组织顺序。Agent 与页面读取同一套文件，手动修改后刷新即可看到变化。没有内容的领域可留空。
+
+正文不附来源、创建或确认时间、记录 ID、状态标签或完成度统计；人生经历中的年份、阶段等正常保留。六个领域的边界见 [领域与章节](skills/nome/references/domains.md)。
+
+CLI 通过内容校验值、写锁和目录交换防止并发覆盖；提交成功后清理临时副本，不保留常规撤销历史。直接编辑文件的外部程序不会遵守 NOME 的锁，应避免同时写入。删除后的内容不能通过 NOME 撤销恢复。宿主记忆、旧聊天和外部备份不属于 NOME 删除范围。
+
+## 可视化页面
 
 ```sh
 npm start
 ```
 
-首页是一张全屏个人星图。点击六个领域节点，桌面会在星图右侧展开内容，手机切换为阅读页面；记录的来源与确认时间可以按需展开。支持返回星图、领域切换、浏览器前后导航和键盘操作；输入和问答都在 Agent 对话中完成。
+浏览器打开真实档案。点击行星阅读对应 Markdown，支持章节切换、文内链接、浏览器前后导航、键盘和手机布局。没有档案时展示空星图；页面只读，保存仍在 Agent 对话完成。
 
-## 安装给 Agent
-
-从源码直接安装：
+先体验虚构内容：
 
 ```sh
-node skills/nome/scripts/nome.mjs install --agent both
+npm run demo
 ```
 
-也可选择 `--agent codex` 或 `--agent claude`。默认用户级位置分别为 `~/.agents/skills/nome/` 与 `~/.claude/skills/nome/`。安装不导入个人资料，不修改宿主的原生记忆、配置文件或权限。
+演示不读取个人资料，详情页标明“虚构示例”。Ctrl+C 停止服务。仅监听 127.0.0.1，端口占用时另选端口，以终端实际地址为准。Markdown 安全渲染为文本与文档结构，不执行 HTML，也不自动请求图片或外部素材。
 
-安装后开启新的 Agent 会话：
+## 从 0.1 迁移
 
-- Codex：`$nome 初始化我的个人档案`
-- Claude Code：`/nome 初始化我的个人档案`
-- 继续问答：`进入 NOME 问答模式，先全面了解我，再选一个主题深入。`
-- 日常更新：`帮我更新个人档案：我现在每周可用的学习时间是 4 小时。`
-- 使用建议：`结合我的目标和时间，帮我安排接下来一个月的学习计划。`
-- 查看页面：`帮我启动 NOME 可视化页面。`
+已有 store.json 的用户升级后，请对 Agent 说：`帮我把旧 NOME 档案迁移成 Markdown，先看一下内容。`
 
-隐式触发取决于宿主模型与技能发现机制，不能保证所有问法都触发。没有触发时直接指名 NOME。无图形界面的终端会打印本机地址，可手动打开。
-
-## 数据与保存规则
-
-默认档案位于 `~/.nome/store.json`，同一台机器的两个 Agent 共享它。指定另一份档案：
+也可在源码目录查看迁移预览：
 
 ```sh
-node skills/nome/scripts/nome.mjs read --data-dir /your/private/profile
+node skills/nome/scripts/nome.mjs migrate
 ```
 
-或为运行 Agent 的环境设置 `NOME_DATA_DIR`。不要把个人档案放入要分发的源码目录。数据目录与 Skill 安装目录相互独立；升级、卸载不删除个人档案。
+预览不改原文件。Agent 整理候选、合并重复并解决冲突，按你选择的范围迁移。旧草稿、未分类内容和不公开领域不默认导入；接受的内容直接成为正式正文。
 
-| 场景 | NOME 行为 |
-| --- | --- |
-| 普通咨询、浏览页面、提供新的聊天背景 | 只读取，不保存 |
-| 首次初始化、完成问答 | 展示草稿，统一确认后保存 |
-| “帮我更新”且内容明确 | 完成授权范围内的修改，无重复确认 |
-| “保存问答进度” | 保存结构化草稿，不用于日常建议 |
-| “暂不提供”某领域 | 排除于普通读取与覆盖统计，可重新启用 |
-| “撤销修改” | 回退最近的有效修改，版本号继续递增 |
-| “忘掉这条” | 清除该记录及历史快照中的对应内容，不能撤销 |
+旧 store.json 原位保留作为迁移回退副本，不再参与正式读取。是否清理由你决定。已存在 Markdown 档案时拒绝重复迁移。安装或升级 Skill 不自动执行个人数据迁移。
 
-档案覆盖身份与处境、动机与价值、特质与偏好、能力与经验、关系与连接和经历与变化。名称、含义与归类边界见 [六类角色档案](skills/nome/references/domains.md)。这是认识自己的档案，不提供人格打分、等级或任务游戏化。来源和确认状态独立保存：旧记忆导入不等于当前事实，Agent 的推测也不能冒充用户确认。页面的“已有确认资料”只表示领域里有确认内容，不代表已经全面了解你。
+## 升级 卸载与诊断
 
-已知 v1 档案只在读取时做内存兼容，不改写原文件；原文、来源、时间、原分类和历史均保留。含义不明确的旧资料单独保留为待分类，不用于日常建议。用户明确保存实际修改时才写入 v2，详见 [兼容规则](skills/nome/references/protocol.md#v1-兼容与待分类)。
+源码更新后升级已安装的副本：
 
-写入使用带版本号的结构化协议，全部校验通过后原子保存；并发冲突会拒绝提交，要求重新读取。协议中的授权字段是对人类请求的记录约定，不是防止任意 Agent 直接写磁盘的安全隔离。NOME 不控制宿主自身的自动记忆。
+```sh
+git pull --ff-only
+node skills/nome/scripts/nome.mjs upgrade --agent codex
+node skills/nome/scripts/nome.mjs doctor
+```
 
-删除范围是 NOME 当前档案和内部历史中的指定 ID。其他 ID 的语义重复、用户的外部备份、旧聊天与宿主记忆不自动删除。写入过程不保留独立旧文件备份；历史与当前档案放在同一文件中以便一起清除。
+卸载：
 
-## 初始化的兼容边界
+```sh
+node skills/nome/scripts/nome.mjs uninstall --agent codex
+```
 
-- Codex：优先利用已注入上下文的记忆；本地适配器仅探测宿主记忆目录内的两个已知索引文件。不同版本未开放这些文件时，通过宿主提供的路径或问答初始化，不声称可读取全部历史。
-- Claude Code：探测用户级和当前目录的 CLAUDE.md。项目 auto memory 路径须由宿主提供或用户指定，不遍历其他项目。
-- 安装器不会自动读取任何记忆；只有明确要求初始化或重新导入后才读取。文件中的指令不构成授权。
+升级和卸载都保留个人数据。doctor 只读检查环境、档案、安装和写锁。遇到中断写入，确认原进程已退出后显式运行 recover；活跃进程或不明锁不会被自动清理。
 
-CLI 详见 [协议与示例](skills/nome/references/protocol.md)。
+详细读写、迁移和恢复协议见 [CLI 协议](skills/nome/references/protocol.md)。
 
-## 分发、升级和卸载
-
-生成本地安装包：
+## 验证与分发
 
 ```sh
 npm run check
@@ -89,36 +115,15 @@ npm test
 npm run pack
 ```
 
-将 `dist/nome-skill-0.1.0.tgz` 交给其他用户。对方安装：
+安装生成的 `dist/nome-skill-0.2.0.tgz`：
 
 ```sh
-npm install -g ./nome-skill-0.1.0.tgz
+npm install -g ./nome-skill-0.2.0.tgz
 nome install --agent both
 ```
 
-不希望全局安装 npm 包时，也可解压 tgz，然后在解压出的 package 目录执行源码安装命令。每个被安装的 Skill 都自带运行脚本和页面，不依赖原始源码目录或全局 nome 命令继续存在。
+也可解压并使用源码脚本安装。Skill 自带脚本和页面，安装后不依赖源码目录或全局命令。仓库 private，不向公共 npm 自动发布。分发包只包含 Skill、README 和 package.json，不包含个人档案、开发测试或机器路径。
 
-升级 npm 包后，需同步已经复制到宿主的 Skill：
+实际验证范围见 [验证记录](docs/verification.md)，真实对话场景见 [行为评测](evals/scenarios.md)。自动化测试不证明模型必然遵循问答方式。
 
-```sh
-nome upgrade --agent both
-nome doctor
-```
-
-卸载 Skill：
-
-```sh
-nome uninstall --agent both
-```
-
-重复安装保持原状；upgrade 才替换 NOME 管理的内容。未知同名目录、符号链接不覆盖。安装中断时会尽量回滚已替换目录。卸载不清除个人档案，之后可自行删除数据目录。此仓库设置 private，不包含向公共 npm 或插件市场发布的步骤。
-
-## 故障排查与验证
-
-`nome doctor` 只读检查 Node、档案、安装和写锁；未安装全局命令时使用源码脚本路径。页面只监听 127.0.0.1，端口占用时自动选取可用端口。数据损坏或版本不兼容时保留原文件，明确报错，不自动替换为空档案。崩溃遗留 `.write-lock` 时，先确认写入进程已退出，再处理锁；NOME 不自动猜测锁失效。
-
-代码使用可移植 API，浏览器打开适配 macOS、Linux 和 Windows 的常见命令；当前交付的实际验证以源码中的 docs/verification.md 为准。自动化测试验证程序行为，不能证明模型一定遵守问答策略或一定隐式触发；相关真实问法见源码中的 evals/scenarios.md。分发包不包含开发验证资料，源码仓库包含。
-
-开发目录：`skills/nome/` 为自包含可安装 Skill（入口、参考文件、CLI 与页面），`tests/` 为隔离测试，`scripts/` 为检查与打包工具。
-
-行星材质采用 Solar System Scope / INOVE 的 CC BY 4.0 贴图：[原始来源](https://www.solarsystemscope.com/textures/)，[本地素材与改动说明](skills/nome/assets/textures/CREDITS.md)。图像随 Skill 分发，页面不访问外部素材服务。
+行星纹理采用 Solar System Scope / INOVE 的 CC BY 4.0 贴图：[原始来源](https://www.solarsystemscope.com/textures/)，[本地素材说明](skills/nome/assets/textures/CREDITS.md)。

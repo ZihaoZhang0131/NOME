@@ -1,107 +1,78 @@
-# CLI 与档案协议 v2
+# Markdown 档案协议
 
-所有命令由当前宿主的 shell 执行，无外部 API 或 npm 依赖。以下以 `nome` 简写；直接安装的 Skill 使用 `node <skill根目录>/scripts/nome.mjs`。
+档案唯一正文位于数据目录 profile/domain/filename.md。默认数据目录 ~/.nome；--data-dir 优先于 NOME_DATA_DIR。读取不创建文件，页面无 HTTP 写入接口，无外部 API、数据库或 npm 运行依赖。
 
-## 只读命令
-
-```sh
-nome doctor
-nome read --domain motivation
-nome read --drafts
-nome history
-nome sources --agent codex
-nome sources --agent claude --memory-dir /explicit/current/project/memory --content
-nome sources --agent codex --path /explicit/memory.md --content
-nome serve --open
-```
-
-`--data-dir DIR` 优先于 `NOME_DATA_DIR`，最后才是用户目录下 `.nome`。目录缺失时，读取返回空档案，不自动创建文件。`read --drafts` 包含用户明确保存的草稿；`--include-inactive` 仅在用户要求查看／管理跳过领域时使用。sources 默认列出元数据，--content 才读正文。不要在隐式咨询中调用 sources。
-
-领域：`identity` 身份与处境，`motivation` 动机与价值，`traits` 特质与偏好，`capabilities` 能力与经验，`relationships` 关系与连接，`growth` 经历与变化。含义与分类规则见 [domains.md](domains.md)。
-
-状态：`confirmed` 已由用户确认；`imported` 导入或保存但尚未核实；`inferred` 待确认推测。source 与状态相互独立，核实一条旧记忆后仍保留它原先的来源。
-
-## 修改：apply
+## 读取与写入
 
 ```sh
-nome apply --file /private/path/change.json
-# 或由支持安全 stdin 的工具传入 JSON：
-nome apply --file -
+node <skill目录>/scripts/nome.mjs read
+node <skill目录>/scripts/nome.mjs read --domain growth
+node <skill目录>/scripts/nome.mjs apply --file /private/change.json
+# 也可使用安全 stdin：apply --file -
 ```
 
-用户说“帮我更新个人档案：我每周可以拿出 4 小时学习”时，读取 revision 后提交：
+read 返回 hash 和六个 domains，每个领域有 id、name、documents；文档只有 path 和 markdown。hash 是本次读取的全档案并发校验值，不持久化，不在页面展示。
+
+修改 JSON 示例（baseHash 必须替换为刚读取的 hash）：
 
 ```json
 {
-  "baseRevision": 0,
-  "authorization": { "userRequested": true, "intent": "update", "confirmed": true },
+  "baseHash": "读取结果中的64位hash",
+  "authorization": { "userRequested": true, "intent": "update" },
   "operations": [
-    {
-      "type": "upsert",
-      "record": {
-        "id": "weekly-learning-time",
-        "domain": "identity",
-        "content": "每周可以拿出 4 小时学习。",
-        "source": { "type": "user", "reference": "本次用户明确更新" },
-        "status": "confirmed"
-      }
-    }
+    { "type": "write", "path": "growth/index.md", "markdown": "# 经历与变化\n\n## 成长背景\n\n用户已明确要求保存的叙述。\n" }
   ]
 }
 ```
 
-`baseRevision` 必须来自刚读取的档案。授权字段由 Agent 如实转述人类请求，并不能证明用户身份，也不是安全沙箱。程序拒绝缺少授权、未知字段和未确认的 confirmed 记录；Agent 不能为了通过校验伪造这些字段。
+intent 为 initialize、update、save-interview。授权字段如实反映用户请求，不是操作系统安全隔离。明确保存即执行，不要求额外 confirmed 字段。其他任何业务字段均不接受。
 
-- `authorization.intent`：initialize / update / save-interview / save-progress。initialize 和 save-interview 保存正式记录或领域状态必须有 confirmed=true，表示用户认可这次保存的草稿；记录本身仍可为 imported，不代表用户已核实每条旧记忆。
-- `upsert.record`：id 可省略，由程序生成；更新已有记录时必须提供已有 ID。domain、content、source、status 必填。程序填 createdAt、updatedAt、confirmedAt，调用者不要提供时间字段。
-- source.type：user / codex-memory / claude-memory / document / inference；可选 reference 为简短来源标识，不复制完整原文。content 上限 6000 字符，reference 上限 1000；一次最多 100 个操作。
-- 保存问答进度：intent=save-progress、upsert.target=drafts，记录 status 必须 imported 或 inferred。正式确认时复用草稿 ID、target=records，草稿自动移出。草稿不会进入默认 read。
-- 保存导入的旧记忆：source.type 对应宿主，status=imported；只有明确核实仍成立才标 confirmed。精确重复按 domain+content+source 去重；语义冲突由 Agent 澄清。未确认记录不能覆盖已确认记录；完全相同的重复导入直接忽略。
-- 领域状态操作：`{"type":"domain","domain":"motivation","state":"withheld"}`。state 可为 active / withheld / not_applicable。主动跳过不算信息缺失，不自动删除旧记录；重新启用需用户要求。
-- `apply` 返回 changed、revision 和受影响 ids。整批操作先在内存验证，再原子写入，任何一项失败不部分提交。没有实际变化不增加版本号。
+每个领域必须有 index.md；可添加语义清晰的章节文件，index.md 以相对链接组织顺序。文件名只允许小写字母、数字、下划线和连字符，目录必须为六领域之一，不支持更深目录或符号链接。单文件上限 1 MiB，全档案上限 4 MiB，一次最多 100 个操作；输入 JSON 上限 8 MiB。不使用 YAML frontmatter。
 
-## 撤销与彻底删除
-
-undo 输入：
+整文件删除：
 
 ```json
-{ "baseRevision": 1, "authorization": { "userRequested": true, "intent": "undo" } }
+{ "type": "delete", "path": "growth/old-chapter.md" }
 ```
 
-forget 输入：
+所有操作先验证，写入临时目录后切换整个档案目录。校验 hash、写锁和临时备份仅用于安全提交，成功后清理，不保留档案历史。没有实际变化不重写文件。
 
-```json
-{ "baseRevision": 1, "authorization": { "userRequested": true, "intent": "forget" }, "ids": ["weekly-learning-time"] }
-```
-
-分别传给 `nome undo --file …` 和 `nome forget --file …`。forget 会清除全部历史快照中的目标 ID，之后 undo 不能恢复它；历史事件只保留不含正文的操作类型和时间。手动复制的其他 ID、外部备份、宿主记忆与聊天不在删除范围。
-
-## 安装与服务
+## 旧数据迁移
 
 ```sh
-nome install --agent both
-nome upgrade --agent both
-nome uninstall --agent both
-nome serve --open --port 43821
-nome serve --demo --open
+node <skill目录>/scripts/nome.mjs migrate
 ```
 
-安装器只管理带 NOME 标记的目录；`--home DIR` 可用于隔离安装验证，不改变真实用户目录。安装／升级／卸载不会创建或修改个人档案。不要将 --home 当作数据目录选项；数据位置始终由 --data-dir / NOME_DATA_DIR 决定。
+只读预览 v1/v2 store.json，返回 baseHash、legacyHash、按领域组织的 candidates 和排除项数量。候选仅含可见正式内容，排除旧草稿、未分类和不公开领域。不同旧状态不会成为新 Markdown 的标签。
 
-页面只监听 127.0.0.1，端口冲突时选择系统可用端口，以 stdout 的实际 URL 为准。GET /health 返回服务状态；GET /api/profile 返回六个领域、记录与草稿；不提供写入 HTTP 接口。浏览器打开失败时返回地址供手动访问。Ctrl+C 停止服务。演示模式仅使用打包的虚构资料，不读取本地个人档案。
+Agent 在对话中整理候选、解决冲突并确定范围；用户接受的部分写成正式正文。提供与 apply 相同的 operations，authorization.intent=migrate，额外带预览的 legacyHash，通过 migrate --file 提交。没有内容也可用 write 写空 index.md，明确完成迁移。已有 profile 目录则拒绝重复迁移。
 
-## 故障处理
+旧 store.json 原位保留作为回退副本，新档案读取完全忽略它。迁移不会改写历史或自动删除旧文件。用户决定是否另行清理。读取到仅有旧档案时返回 MIGRATION_REQUIRED，不声称空档案，不自动迁移。
 
-`INVALID_INPUT / INVALID_JSON`：修正载荷，不猜测用户意思。`CONFIRMATION_REQUIRED / AUTHORIZATION_REQUIRED`：缺乏真实授权时先回到对话，不修改标志绕过。`REVISION_CONFLICT / RECORD_CONFLICT`：重新读取并与用户当前请求核对。`CORRUPT_STORE / UNSUPPORTED_SCHEMA`：保留原文件，报告问题，不自动重建。`WRITE_LOCKED`：可能正在写入或之前进程中断；先检查活跃进程，确认失效后由用户决定清除锁。
+## 本地服务
 
-档案存在单个 store.json 中，包含 schemaVersion=2、revision、updatedAt、profile 与 history。profile 包含 domains、records、drafts；history 包含每次修改前后的结构化快照。为避免重新泄漏已删除内容，不保存自由文本修改理由、原始授权语句或独立日志。读取时校验版本；不自动迁移未知版本。
+```sh
+node <skill目录>/scripts/nome.mjs serve --open
+node <skill目录>/scripts/nome.mjs serve --demo --open
+```
 
-## v1 兼容与待分类
+只监听 127.0.0.1，默认端口 43821，占用后另选可用端口，以实际输出为准。/health 检查服务；/api/profile 返回六模块的 Markdown 正文与 demo 标记，不含 hash、状态、来源或操作时间。每次请求重新读取文件，刷新即可展示外部编辑。页面安全渲染标题、段落、列表、引用、表格、代码和链接；HTML 只当文本，不自动加载图片。内部文档链接与目录可以导航。
 
-读取已知 v1 档案时只在内存转换，不改写磁盘、不改变 revision、确认状态、原文、来源或时间。context → identity，goals / values → motivation，preferences → traits；experience / constraints 的含义横跨新类别，统一保留为 unclassified 待用户确认，不能从旧分类名推断新归属。当前档案与所有历史快照一起转换，撤销不会恢复旧分类结构。
+## 安装与诊断
 
-每条旧记录保留 legacyDomain，每份旧快照保留 legacyDomains 的原状态与时间，可据此恢复原分类结构。合并领域时任一旧领域 withheld 则合并领域 withheld；否则任一 not_applicable 则合并领域 not_applicable，避免因合并暴露原本隐藏的资料。只有用户明确重新启用该合并领域，才恢复其内容。未分类旧资料继续遵循原领域的隐藏状态。
+```sh
+node <skill目录>/scripts/nome.mjs install --agent codex
+node <skill目录>/scripts/nome.mjs upgrade --agent both
+node <skill目录>/scripts/nome.mjs uninstall --agent both
+node <skill目录>/scripts/nome.mjs doctor
+```
 
-`read --domain unclassified --drafts` 单独查看待分类资料；`--include-inactive` 仍只用于用户明确要求管理隐藏资料。它不增加第七颗行星，也不计入六类覆盖、不用于建议。页面在任一详情的“待分类的旧资料”中保留可见旧资料的原文和来源，默认折叠。新信息也可用 upsert 写入 domain=unclassified；未明确归属时不猜测。确认分类后复用原 ID、正文、来源和状态，用新 domain upsert。该明确更新后，当前记录不再携带 legacyDomain；历史仍保留变更前的原分类，forget 仍清除所有快照中的该记录。
+安装位置与以前一致，安装升级卸载不读写个人资料。doctor 检查环境、文件与锁，旧档案需迁移时明确报告。--home 仅用于隔离安装/来源/诊断，不替代 --data-dir。
 
-首次真正的 apply / undo / forget 才原子写入 v2；无实际变化的请求不触碰原文件。未知版本或格式错误仍拒绝并保留原文件。NOME 不另存包含正文的迁移副本，以免破坏彻底删除语义。
+- CONTENT_CONFLICT：重新读取并合并，不盲目替换 hash。
+- WRITE_LOCKED：等待活跃写入；中断遗留锁时，用户明确要求恢复后运行 recover。它拒绝清理仍活跃的本机进程或无法识别的锁；可恢复目录交换中断时的原始文件。
+- MIGRATION_REQUIRED：按上面的预览和选择流程迁移。
+- CORRUPT_STORE / UNSUPPORTED_SCHEMA：旧档案损坏或格式不支持，保留原文件。
+- UNSAFE_PATH / PROFILE_TOO_LARGE：检查文件结构或大小，不静默跳过正文。
+
+暂停问答与未保存内容留在对话中，不提供 drafts、history 或 undo 的旧状态接口。

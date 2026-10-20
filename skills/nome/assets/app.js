@@ -1,17 +1,23 @@
 import { profileView } from './profile-view.js';
+import { renderMarkdown, resolveDocumentLink } from './markdown.js';
 import { orbits, orbitPath, satellitePosition } from './orbit.js';
 import { paintSphere } from './planet-material.js';
 import { cameraPose, cameraTransform } from './camera.js';
 
 const $ = id => document.getElementById(id);
 const svgNS = 'http://www.w3.org/2000/svg';
-const sourceNames = { user: '你提供的内容', 'codex-memory': 'Codex 记忆', 'claude-memory': 'Claude Code 记忆', document: '指定资料', inference: 'Agent 推测' };
-const statusNames = { confirmed: '已确认', imported: '导入资料 · 待核实', inferred: '推测 · 待核实' };
-// Original names are provenance only; all current classification comes from the six API domains.
-const legacyNames = { context: '当前处境', experience: '经历与能力', goals: '目标与方向', values: '价值取舍', constraints: '现实约束', preferences: '协作偏好' };
 let profile;
 let summary;
 let selected = 'all';
+let selectedRoute = 'all';
+let selectedPath = null;
+let selectedAnchor = '';
+function routeParts(route) {
+  const [file, anchor = ''] = route.split('~');
+  const domain = file.split('/')[0];
+  return { domain, path: file.includes('/') ? file : null, anchor: decodeAnchor(anchor) };
+}
+function decodeAnchor(value) { try { return decodeURIComponent(value); } catch { return ''; } }
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
 let motionPaused = false;
@@ -109,19 +115,6 @@ function svgEl(tag, attributes = {}) {
   Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
   return node;
 }
-function date(value, time = false) {
-  if (!value) return '尚未确认';
-  return new Date(value).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', ...(time ? { hour: '2-digit', minute: '2-digit', hour12: false } : {}) });
-}
-function status(record) {
-  return record.status === 'imported' && record.source.type.endsWith('-memory') ? '旧记忆 · 待核实' : statusNames[record.status];
-}
-function domainNote(domain) {
-  if (domain.state === 'withheld') return '由你选择，暂不提供';
-  if (domain.state === 'not_applicable') return '当前不适用';
-  return [domain.confirmed.length && `${domain.confirmed.length} 条已确认`, domain.pending.length && `${domain.pending.length} 条待核实`, domain.drafts.length && `${domain.drafts.length} 条草稿`].filter(Boolean).join(' · ') || '还没有记录';
-}
-
 function renderAtlas() {
   // Equal planet sizes; materials express identity, never profile scores.
   const svg = svgEl('svg', { viewBox: '0 0 600 560', 'aria-hidden': 'true', class: 'atlas-art' });
@@ -140,10 +133,10 @@ function renderAtlas() {
   const nodes = [];
   const captions = [];
   summary.domains.forEach((domain, index) => {
-    const button = el('button', `atlas-label atlas-label-${index} state-${domain.state}`);
+    const button = el('button', `atlas-label atlas-label-${index}`);
     button.type = 'button'; button.dataset.domain = domain.id;
     button.setAttribute('aria-pressed', String(selected === domain.id));
-    button.setAttribute('aria-label', `探索${domain.name}，${domainNote(domain)}`);
+    button.setAttribute('aria-label', `探索${domain.name}`);
     button.setAttribute('aria-controls', 'detail');
     button.title = `${domain.name} · ${orbits[index].name}`;
     const orb = el('span', 'node-orb');
@@ -186,9 +179,10 @@ function highlightDomain(id) {
   $('atlas').querySelectorAll('.atlas-label, .satellite-caption').forEach(node => node.classList.toggle('is-highlighted', node.dataset.domain === id));
   $('atlas').querySelector('.atlas-center-name').textContent = domain ? domain.name : 'nome.';
 }
-function navigate(id) {
-  const target = summary.domains.some(domain => domain.id === id) ? id : 'all';
-  if (selected === target) return;
+function navigate(route) {
+  const parts = routeParts(route);
+  const target = summary.domains.some(domain => domain.id === parts.domain) ? route : 'all';
+  if (selectedRoute === target) return;
   history[pendingDomain !== null ? 'replaceState' : 'pushState']({ nome: true }, '', target === 'all' ? location.pathname + location.search : `#${target}`);
   return transitionDomain(target, { focus: true });
 }
@@ -196,21 +190,26 @@ function showDomain(id, focus = false) {
   return transitionDomain(id, { focus, animate: false, force: true });
 }
 async function transitionDomain(id, { focus = false, animate = true, force = false } = {}) {
-  const domain = summary.domains.find(item => item.id === id);
-  const target = domain ? id : 'all';
-  if (!force && selected === target) return;
+  const parts = routeParts(id);
+  const domain = summary.domains.find(item => item.id === parts.domain);
+  const target = domain ? domain.id : 'all';
+  if (!force && selectedRoute === id) return;
+  const previousDomain = selected;
   const from = cancelCamera();
   const version = navigationVersion;
   const camera = $('atlas').querySelector('.atlas-camera');
   selected = target;
+  selectedRoute = domain ? id : 'all';
+  selectedPath = parts.path;
+  selectedAnchor = parts.anchor;
   pendingDomain = target;
-  if (domain) returnFocusDomain = id;
+  if (domain) returnFocusDomain = domain.id;
   $('dashboard').classList.toggle('is-exploring', Boolean(domain));
   $('atlas').classList.toggle('is-close', Boolean(domain));
   // The magnified body is decorative; navigation remains in the reading pane.
   $('atlas').inert = Boolean(domain);
   $('atlas').setAttribute('aria-hidden', String(Boolean(domain)));
-  satelliteNodes.forEach(node => node.classList.toggle('is-selected', node.querySelector('button').dataset.domain === (domain ? id : returnFocusDomain)));
+  satelliteNodes.forEach(node => node.classList.toggle('is-selected', node.querySelector('button').dataset.domain === (domain ? domain.id : returnFocusDomain)));
   $('atlas').querySelectorAll('.atlas-label').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.domain === selected)));
   $('domain-nav').querySelectorAll('button').forEach(button => {
     if (button.dataset.domain === selected) button.setAttribute('aria-current', 'page');
@@ -227,7 +226,7 @@ async function transitionDomain(id, { focus = false, animate = true, force = fal
   syncMotion();
   const to = focusedCamera(selected);
   camera.style.transform = to;
-  const canFly = animate && !reducedMotion.matches && !motionPaused && !document.hidden && typeof camera.animate === 'function';
+  const canFly = animate && previousDomain !== target && !reducedMotion.matches && !motionPaused && !document.hidden && typeof camera.animate === 'function';
   if (canFly) {
     $('atlas').classList.add('is-travelling');
     camera.style.willChange = 'transform';
@@ -246,45 +245,47 @@ async function transitionDomain(id, { focus = false, animate = true, force = fal
     $('detail').hidden = true;
     satelliteHovered = false; satelliteFocused = false;
     if (focus) $('atlas').querySelector(`[data-domain="${returnFocusDomain}"]`)?.focus({ preventScroll: true });
-  } else if (focus) $('detail-title').focus({ preventScroll: true });
+  } else {
+    if (focus) $('detail-title').focus({ preventScroll: true });
+    if (selectedAnchor) document.getElementById(`section-${selectedAnchor}`)?.scrollIntoView({ block: 'start' });
+  }
   $('announcement').textContent = domain ? `正在探索${domain.name}` : '已返回个人星图';
   syncMotion();
 }
-function renderRecord(record, draft = false, unclassified = false) {
-  const article = el('article', `record ${draft ? 'draft-record' : ''}`);
-  article.append(el('p', `record-status status-${record.status}`, unclassified ? `待分类 · ${draft ? '草稿' : status(record)}` : draft ? '草稿 · 尚未纳入正式档案' : status(record)), el('p', 'record-content', record.content));
-  const details = el('details', 'record-meta');
-  details.append(el('summary', '', '来源与时间'));
-  const list = el('dl');
-  const fields = [['来源', sourceNames[record.source.type] || record.source.type], ['确认时间', date(record.confirmedAt, true)], ['更新于', date(record.updatedAt, true)]];
-  if (record.legacyDomain) fields.push(['原分类', legacyNames[record.legacyDomain] || record.legacyDomain]);
-  if (record.source.reference) fields.splice(1, 0, ['参考', record.source.reference]);
-  fields.forEach(([name, value]) => list.append(el('dt', '', name), el('dd', '', value)));
-  details.append(list); article.append(details);
-  return article;
-}
 function renderDetail(domain) {
   $('detail-title').textContent = domain.name;
-  $('detail-definition').textContent = domain.description;
-  $('detail-description').textContent = domainNote(domain);
-  const content = $('detail-records'); content.replaceChildren();
-  if (domain.state === 'withheld' || domain.state === 'not_applicable') {
-    content.append(el('p', 'detail-empty', domain.state === 'withheld' ? '你选择暂不提供这一方面。' : '这个领域目前不适用于你。'), el('p', 'muted', '不会作为信息缺失，也不会用于生成建议。'));
-  } else {
-    domain.records.forEach(record => content.append(renderRecord(record)));
-    domain.drafts.forEach(record => content.append(renderRecord(record, true)));
-    if (!domain.records.length && !domain.drafts.length) content.append(el('p', 'detail-empty', '这一方面还没有记录。'), el('p', 'muted', domain.prompts.join(' · ')), el('p', 'detail-prompt', '在 Agent 对话中，说「进入 NOME 问答模式」。'));
+  const content = $('detail-documents'); content.replaceChildren();
+  const chapters = $('chapter-nav'); chapters.replaceChildren();
+  chapters.hidden = domain.documents.length <= 1;
+  const doc = domain.documents.find(item => item.path === selectedPath) || domain.documents[0];
+  for (const chapter of domain.documents) {
+    const button = el('button', 'chapter-tab', chapter.title);
+    button.type = 'button';
+    if (chapter === doc) button.setAttribute('aria-current', 'page');
+    button.addEventListener('click', () => navigate(chapter.path)); chapters.append(button);
   }
-  if (domain.state !== 'withheld' && domain.state !== 'not_applicable') content.append(el('p', 'detail-prompt', `在 Agent 对话中，说「补充我的${domain.name}」。`));
-  const pending = profile.unclassified || { records: [], drafts: [] };
-  const count = pending.records.length + pending.drafts.length;
-  if (count) {
-    const section = el('details', 'unclassified-records');
-    section.append(el('summary', '', `待分类的旧资料（${count}）`), el('p', 'muted', '原文、来源与时间均保留；这些资料尚不属于任何新分类，不用于日常建议。在 Agent 对话中确认归属后再整理。'));
-    pending.records.forEach(record => section.append(renderRecord(record, false, true)));
-    pending.drafts.forEach(record => section.append(renderRecord(record, true, true)));
-    content.append(section);
+  if (!doc || !doc.markdown.trim()) { content.append(el('p', 'detail-empty', '这里还没有内容。')); return; }
+  const article = el('article', 'markdown-body');
+  const rendered = renderMarkdown(doc.markdown, { skipTitle: domain.name, hrefFor: href => {
+    const target = resolveDocumentLink(href, doc.path);
+    return target && summary.domains.some(d => d.documents.some(item => item.path === target.path))
+      ? `#${target.path}${target.anchor ? `~${encodeURIComponent(target.anchor)}` : ''}` : href;
+  }, onLink: (href, event) => {
+    const target = resolveDocumentLink(href, doc.path);
+    if (target && summary.domains.some(d => d.documents.some(item => item.path === target.path))) {
+      event.preventDefault();
+      navigate(`${target.path}${target.anchor ? `~${encodeURIComponent(target.anchor)}` : ''}`);
+    } else if (!/^(https?:|mailto:)/i.test(href)) event.preventDefault();
+  } });
+  if (rendered.headings.length >= 4 && doc.markdown.length >= 1200) {
+    const toc = el('nav', 'section-nav'); toc.setAttribute('aria-label', '本文目录');
+    for (const heading of rendered.headings) {
+      const a = el('a', '', heading.text); a.href = `#${doc.path}~${encodeURIComponent(heading.slug)}`;
+      a.addEventListener('click', event => { event.preventDefault(); navigate(`${doc.path}~${encodeURIComponent(heading.slug)}`); }); toc.append(a);
+    }
+    content.append(toc);
   }
+  article.append(rendered.fragment); content.append(article);
 }
 function render() {
   cancelCamera();
@@ -331,7 +332,7 @@ $('atlas').addEventListener('pointermove', event => {
 });
 $('atlas').addEventListener('pointerleave', resetParallax);
 function settleMotion() {
-  if (summary) showDomain(selected);
+  if (summary) showDomain(selectedRoute);
   syncMotion();
 }
 reducedMotion.addEventListener('change', settleMotion);
@@ -340,7 +341,7 @@ document.addEventListener('visibilitychange', settleMotion);
 window.addEventListener('resize', settleMotion);
 new ResizeObserver(() => {
   orbitScale = $('atlas').clientWidth / 600; placeSatellites();
-  if (summary && (selected !== 'all' || pendingDomain !== null)) showDomain(selected);
+  if (summary && (selected !== 'all' || pendingDomain !== null)) showDomain(selectedRoute);
 }).observe($('atlas'));
 new IntersectionObserver(([entry]) => { atlasVisible = entry.isIntersecting; syncMotion(); }).observe($('atlas'));
 refresh();

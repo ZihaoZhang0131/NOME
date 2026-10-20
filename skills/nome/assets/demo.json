@@ -1,110 +1,34 @@
-{
-  "domains": {
-    "identity": {
-      "state": "active",
-      "updatedAt": null
-    },
-    "motivation": {
-      "state": "active",
-      "updatedAt": null
-    },
-    "traits": {
-      "state": "active",
-      "updatedAt": null
-    },
-    "capabilities": {
-      "state": "active",
-      "updatedAt": null
-    },
-    "relationships": {
-      "state": "active",
-      "updatedAt": null
-    },
-    "growth": {
-      "state": "active",
-      "updatedAt": null
-    }
+[
+  {
+    "path": "identity/index.md",
+    "markdown": "# 身份与处境\n\n我叫林溪，在一座城市的公共文化机构做活动策划，工作之外喜欢徒步、摄影和做饭。\n\n现在处在从独立执行走向带领小组的阶段。我希望保持稳定的生活节奏，为阅读和朋友留出时间。\n"
   },
-  "records": [
-    {
-      "id": "demo-identity",
-      "domain": "identity",
-      "content": "目前在做产品设计，也在探索独立创作，正处于从团队工作转向自主项目的阶段。",
-      "source": {
-        "type": "user",
-        "reference": "虚构人物的示例回答"
-      },
-      "status": "confirmed",
-      "createdAt": "2026-01-10T08:00:00.000Z",
-      "updatedAt": "2026-01-10T08:00:00.000Z",
-      "confirmedAt": "2026-01-10T08:00:00.000Z"
-    },
-    {
-      "id": "demo-motivation",
-      "domain": "motivation",
-      "content": "希望做出能被真实用户使用的小作品；比起扩大规模，我更看重自主与持续投入。",
-      "source": {
-        "type": "user",
-        "reference": "虚构人物的示例回答"
-      },
-      "status": "confirmed",
-      "createdAt": "2026-01-10T08:00:00.000Z",
-      "updatedAt": "2026-01-10T08:00:00.000Z",
-      "confirmedAt": "2026-01-10T08:00:00.000Z"
-    },
-    {
-      "id": "demo-traits",
-      "domain": "traits",
-      "content": "习惯先做一个小版本再讨论。沟通时喜欢具体建议，也欢迎说明依据的不同意见。",
-      "source": {
-        "type": "user",
-        "reference": "虚构人物的示例回答"
-      },
-      "status": "confirmed",
-      "createdAt": "2026-01-10T08:00:00.000Z",
-      "updatedAt": "2026-01-10T08:00:00.000Z",
-      "confirmedAt": "2026-01-10T08:00:00.000Z"
-    },
-    {
-      "id": "demo-capabilities",
-      "domain": "capabilities",
-      "content": "曾参与一个社区阅读项目，负责整理资料并完成导览；这段实践可能体现了信息组织能力，仍待本人核实。",
-      "source": {
-        "type": "codex-memory",
-        "reference": "虚构的旧记忆摘要"
-      },
-      "status": "imported",
-      "createdAt": "2026-01-10T08:00:00.000Z",
-      "updatedAt": "2026-01-10T08:00:00.000Z",
-      "confirmedAt": null
-    },
-    {
-      "id": "demo-relationships",
-      "domain": "relationships",
-      "content": "一位一起做阅读项目的朋友，是虚构人物重要的讨论伙伴；也与社区阅读小组保持连接。",
-      "source": {
-        "type": "user",
-        "reference": "虚构人物的示例回答"
-      },
-      "status": "confirmed",
-      "createdAt": "2026-01-10T08:00:00.000Z",
-      "updatedAt": "2026-01-10T08:00:00.000Z",
-      "confirmedAt": "2026-01-10T08:00:00.000Z"
-    }
-  ],
-  "drafts": [
-    {
-      "id": "demo-growth",
-      "domain": "growth",
-      "content": "正在回看一次项目受挫的经历：从急于一次做好，逐渐转向先试验、再调整。",
-      "source": {
-        "type": "user",
-        "reference": "虚构人物的示例回答"
-      },
-      "status": "inferred",
-      "createdAt": "2026-01-10T08:00:00.000Z",
-      "updatedAt": "2026-01-10T08:00:00.000Z",
-      "confirmedAt": null
-    }
-  ]
-}
+  {
+    "path": "motivation/index.md",
+    "markdown": "# 动机与价值\n\n## 想投入的事情\n\n我想把社区活动做得更贴近居民的真实生活，让初次参加的人也能找到归属感。\n\n## 重视的取舍\n\n比起把日程排满，我更愿意把少数事情做好。工作中的成长重要，和家人的相处以及日常生活也同样重要。\n"
+  },
+  {
+    "path": "traits/index.md",
+    "markdown": "# 特质与偏好\n\n我喜欢先理解一件事的整体脉络，再逐步动手。和人协作时，明确的分工和坦诚的反馈会让我更自在。\n\n- 学习新事物时，先看完整实例，再回头理解原理。\n- 做决定前会写下几个关键取舍。\n- 休息时喜欢不赶时间的散步。\n"
+  },
+  {
+    "path": "capabilities/index.md",
+    "markdown": "# 能力与经验\n\n## 实践\n\n我组织过社区读书会，也和伙伴一起策划过小型展览。我的主要职责是需求访谈、现场协调和活动复盘。\n\n| 实践 | 具体承担 |\n| --- | --- |\n| 社区读书会 | 访谈、选题和主持 |\n| 小型展览 | 内容编排和现场协调 |\n\n我仍在学习预算安排和团队沟通，没有独立负责过大型项目。\n"
+  },
+  {
+    "path": "relationships/index.md",
+    "markdown": "# 关系与连接\n\n家人给我稳定的支持。几位长期朋友能让我直接表达困惑，不需要每次都给出漂亮的答案。\n\n我参加了一个本地徒步小组，也认识了不同职业的人。和这些人相处让我看到工作之外的生活方式。\n"
+  },
+  {
+    "path": "growth/index.md",
+    "markdown": "# 经历与变化\n\n我成长于一座小城，离开家求学后逐渐习惯自己做选择。工作让我从关注把事情做完，转向理解事情对别人有什么意义。\n\n## 人生阶段\n\n- [成长与求学](early-life.md)\n- [工作与近年的变化](career.md)\n"
+  },
+  {
+    "path": "growth/early-life.md",
+    "markdown": "# 成长与求学\n\n## 成长环境\n\n童年时，我常在家附近的图书馆度过周末。家人重视认真做事，也给了我尝试不同兴趣的空间。\n\n## 中学时期\n\n我参加过校园刊物的编辑，第一次意识到文字和图像可以把不同人的经历连接起来。\n\n## 离家求学\n\n进入新的城市后，我需要自己安排生活。起初容易向别人寻找标准答案，后来逐渐学会在不确定中作出选择。\n\n## 对自己的新认识\n\n我不需要每次都立刻知道方向，可以先做一件具体的事，再观察它带来的变化。\n\n[继续阅读工作阶段](career.md)\n"
+  },
+  {
+    "path": "growth/career.md",
+    "markdown": "# 工作与近年的变化\n\n## 开始工作\n\n刚开始工作时，我更关注按时完成每个任务。一次活动的参与者反馈，让我意识到流程顺利还不等于对别人有帮助。\n\n> 我开始先问大家需要什么，再讨论我们能做什么。\n\n## 近年的变化\n\n开始带领小组后，我逐渐愿意把事情交给别人，也更愿意承认自己需要帮助。\n\n我正在尝试让工作和生活保持联系，而不是把它们当作互相争夺时间的两部分。\n\n[返回经历概览](index.md)\n"
+  }
+]

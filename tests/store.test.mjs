@@ -2,138 +2,134 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import { readStore, applyRequest, undoRequest, forgetRequest, historyView } from '../skills/nome/scripts/lib/store.mjs';
-import { view } from '../skills/nome/scripts/lib/model.mjs';
-import { temporary, record, request, maintenance } from './helpers.mjs';
+import os from 'node:os';
+import { readProfile, applyRequest, recoverWrite } from '../skills/nome/scripts/lib/store.mjs';
+import { profileHash } from '../skills/nome/scripts/lib/model.mjs';
+import { temporary, request, write, exec } from './helpers.mjs';
 
-test('empty reads neither create files nor mutate any state', async t => {
-  const dir = path.join(await temporary(t), 'absent');
-  const store = await readStore(dir);
-  assert.equal(store.revision, 0); assert.equal(view(store).records.length, 0);
-  assert.equal(historyView(store).events.length, 0);
-  await assert.rejects(fs.stat(dir), { code: 'ENOENT' });
+test('missing profile reads empty without creating files', async t => {
+  const root = await temporary(t); const dir = path.join(root, 'absent');
+  assert.deepEqual(await readProfile(dir), { documents: [], hash: profileHash([]) });
+  assert.deepEqual(await fs.readdir(root), []);
 });
-test('explicit updates are versioned, source-backed, and repeatable without extra writes', async t => {
-  const dir = await temporary(t);
-  assert.deepEqual(await applyRequest(dir, request()), { changed: true, revision: 1, ids: ['learning-time'] });
-  const stored = await readStore(dir); const before = await fs.readFile(path.join(dir, 'store.json'));
-  assert.equal(stored.profile.records[0].source.type, 'user');
-  assert.ok(stored.profile.records[0].confirmedAt);
-  assert.equal((await applyRequest(dir, request(1))).changed, false);
-  assert.deepEqual(await fs.readFile(path.join(dir, 'store.json')), before);
-  if (process.platform !== 'win32') assert.equal((await fs.stat(path.join(dir, 'store.json'))).mode & 0o777, 0o600);
+test('writes coherent Markdown only, retains exact text, external edits are the source of truth', async t => {
+  const dir = await temporary(t); const text = '# 人生\n\n1998 年是经历时间。\n\n## 变化\n\n我选择慢下来。\n';
+  await applyRequest(dir, request(undefined, [write('growth/index.md', text)]));
+  const file = path.join(dir, 'profile/growth/index.md');
+  assert.equal(await fs.readFile(file, 'utf8'), text);
+  assert.deepEqual(await fs.readdir(dir), ['profile']);
+  await fs.writeFile(file, text + '\n手动补充。\n');
+  const current = await readProfile(dir);
+  assert.equal(current.documents[0].markdown, text + '\n手动补充。\n');
+  assert.equal((await fs.stat(file)).mode & 0o777, 0o600);
 });
-test('missing user authorization and unconfirmed facts are rejected', async t => {
-  const dir = await temporary(t);
-  const cases = [request(), request(), request()];
-  cases[0].authorization.userRequested = false;
-  delete cases[1].authorization;
-  cases[2].authorization.confirmed = false;
-  for (const change of cases) await assert.rejects(applyRequest(dir, change));
-  assert.equal((await readStore(dir)).revision, 0);
-});
-test('initial import requires save approval and does not turn memories into confirmed facts', async t => {
-  const dir = await temporary(t);
-  const imported = record({ id: undefined, source: { type: 'codex-memory', reference: 'fictional-memory.md' }, status: 'imported' });
-  delete imported.id;
-  const unapproved = request(0, [imported], { intent: 'initialize', confirmed: false });
-  await assert.rejects(applyRequest(dir, unapproved), { code: 'CONFIRMATION_REQUIRED' });
-  await applyRequest(dir, request(0, [imported], { intent: 'initialize' }));
-  let store = await readStore(dir);
-  assert.equal(store.profile.records[0].confirmedAt, null);
-  assert.equal(store.profile.records[0].status, 'imported');
-  await applyRequest(dir, request(1, [imported], { intent: 'initialize' }));
-  store = await readStore(dir); assert.equal(store.revision, 1); assert.equal(store.profile.records.length, 1);
-});
-test('saved interview drafts are excluded from advice and promote with stable IDs', async t => {
-  const dir = await temporary(t);
-  const draft = record({ status: 'imported' });
-  await applyRequest(dir, request(0, [draft], { intent: 'save-progress', confirmed: false, target: 'drafts' }));
-  let store = await readStore(dir);
-  assert.equal(view(store).records.length, 0); assert.equal(view(store).drafts, undefined);
-  assert.equal(view(store, { drafts: true }).drafts.length, 1);
-  await applyRequest(dir, request(1, [record()], { intent: 'save-interview' }));
-  store = await readStore(dir);
-  assert.equal(store.profile.drafts.length, 0); assert.equal(store.profile.records[0].id, draft.id);
-  assert.equal(store.profile.records[0].createdAt, store.history[0].after.drafts[0].createdAt);
-});
-test('save-progress cannot modify official records or domain states', async t => {
-  const dir = await temporary(t);
-  await assert.rejects(applyRequest(dir, request(0, [record({ status: 'imported' })], { intent: 'save-progress' })));
-  const change = request(0, [], { intent: 'save-progress' }); change.operations = [{ type: 'domain', domain: 'motivation', state: 'withheld' }];
-  await assert.rejects(applyRequest(dir, change));
-});
-test('uncertain imports cannot replace a confirmed record and whole batch remains atomic', async t => {
+test('no-op saves preserve the file modification time and leave no locks or history', async t => {
   const dir = await temporary(t); await applyRequest(dir, request());
-  const before = await fs.readFile(path.join(dir, 'store.json'));
-  await assert.rejects(applyRequest(dir, request(1, [record({ id: 'new-record', content: '另一个事实' }), record({ status: 'imported', content: '旧记忆说有 20 小时。' })])), { code: 'RECORD_CONFLICT' });
-  assert.deepEqual(await fs.readFile(path.join(dir, 'store.json')), before);
+  const file = path.join(dir, 'profile/identity/index.md'); const before = await fs.stat(file);
+  assert.equal((await applyRequest(dir, request((await readProfile(dir)).hash))).changed, false);
+  assert.equal((await fs.stat(file)).mtimeMs, before.mtimeMs);
+  assert.deepEqual(await fs.readdir(dir), ['profile']);
 });
-test('stale versions and concurrent writers cannot lose updates', async t => {
-  const dir = await temporary(t);
-  const results = await Promise.allSettled([applyRequest(dir, request()), applyRequest(dir, request(0, [record({ id: 'another' })]))]);
-  assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
-  assert.equal(results.filter(r => r.status === 'rejected').length, 1);
-  assert.equal((await readStore(dir)).revision, 1);
-  await assert.rejects(applyRequest(dir, request()), { code: 'REVISION_CONFLICT' });
-});
-test('skipped domains are excluded from advice but remain recoverable on explicit reactivation', async t => {
+test('stale hashes refuse overwrite and a failing batch applies no partial changes', async t => {
   const dir = await temporary(t); await applyRequest(dir, request());
-  const change = request(1); change.operations = [{ type: 'domain', domain: 'identity', state: 'withheld' }];
-  await applyRequest(dir, change);
-  assert.equal(view(await readStore(dir)).records.length, 0);
-  assert.equal(view(await readStore(dir), { includeInactive: true }).records.length, 1);
-  change.baseRevision = 2; change.operations[0].state = 'active'; await applyRequest(dir, change);
-  assert.equal(view(await readStore(dir)).records.length, 1);
+  await assert.rejects(applyRequest(dir, request(undefined, [write('identity/index.md', 'stale')])), { code: 'CONTENT_CONFLICT' });
+  const before = await readProfile(dir);
+  await assert.rejects(applyRequest(dir, request(before.hash, [write('identity/index.md', 'new'), write('growth/../../outside.md', 'bad')])));
+  assert.deepEqual(await readProfile(dir), before);
 });
-test('undo supports multiple changes and branches without resetting revision numbers', async t => {
-  const dir = await temporary(t);
-  await applyRequest(dir, request());
-  await applyRequest(dir, request(1, [record({ content: '每周 8 小时' })]));
-  await undoRequest(dir, maintenance(2, 'undo'));
-  assert.equal((await readStore(dir)).profile.records[0].content, record().content);
-  await applyRequest(dir, request(3, [record({ content: '每周 2 小时' })]));
-  await undoRequest(dir, maintenance(4, 'undo'));
-  await undoRequest(dir, maintenance(5, 'undo'));
-  const store = await readStore(dir); assert.equal(store.revision, 6); assert.equal(store.profile.records.length, 0);
-  await assert.rejects(undoRequest(dir, maintenance(6, 'undo')), { code: 'NOTHING_TO_UNDO' });
-});
-test('forget scrubs current records, drafts, source text and all historical snapshots', async t => {
-  const dir = await temporary(t);
-  const sensitive = record({ content: 'UNIQUE_PRIVATE_CONTENT', source: { type: 'user', reference: 'UNIQUE_PRIVATE_SOURCE' } });
-  await applyRequest(dir, request(0, [sensitive]));
-  await applyRequest(dir, request(1, [record({ id: 'retained', content: '保留资料' })]));
-  await applyRequest(dir, request(2, [record({ id: 'draft-only', content: 'UNIQUE_DRAFT_CONTENT', status: 'imported' })], { intent: 'save-progress', target: 'drafts', confirmed: false }));
-  await forgetRequest(dir, maintenance(3, 'forget', ['learning-time', 'draft-only']));
-  let raw = await fs.readFile(path.join(dir, 'store.json'), 'utf8');
-  for (const text of ['UNIQUE_PRIVATE_CONTENT', 'UNIQUE_PRIVATE_SOURCE', 'UNIQUE_DRAFT_CONTENT', 'learning-time', 'draft-only']) assert.ok(!raw.includes(text));
-  assert.equal((await readStore(dir)).profile.records[0].id, 'retained');
-  await undoRequest(dir, maintenance(4, 'undo'));
-  raw = await fs.readFile(path.join(dir, 'store.json'), 'utf8');
-  assert.ok(!raw.includes('UNIQUE_PRIVATE')); assert.equal((await readStore(dir)).profile.records.length, 0);
-});
-test('corrupted or future schemas are preserved on failed writes', async t => {
-  for (const raw of ['{ broken', '{"schemaVersion":999}']) {
-    const dir = await temporary(t); const file = path.join(dir, 'store.json'); await fs.writeFile(file, raw);
-    await assert.rejects(applyRequest(dir, request()));
-    assert.equal(await fs.readFile(file, 'utf8'), raw);
-    await assert.rejects(fs.stat(path.join(dir, '.write-lock')), { code: 'ENOENT' });
-  }
-});
-test('invalid operation, long content, unknown fields, domain and malformed IDs fail without changes', async t => {
+test('a manual edit during staging is preserved and rejects the pending change', async t => {
   const dir = await temporary(t); await applyRequest(dir, request());
-  const before = await fs.readFile(path.join(dir, 'store.json'));
-  const changes = [
-    request(1, [record({ content: 'x'.repeat(6001) })]), request(1, [record({ domain: 'unknown' })]),
-    request(1, [record({ id: '../escape' })]), request(1, [record({ extra: true })])
+  const before = await readProfile(dir);
+  await assert.rejects(applyRequest(dir, request(before.hash, [write('identity/index.md', 'AI overwrite')]), {
+    beforeCommit: () => fs.writeFile(path.join(dir, 'profile/identity/index.md'), 'User edit')
+  }), { code: 'CONTENT_CONFLICT' });
+  assert.equal((await readProfile(dir)).documents[0].markdown, 'User edit');
+});
+test('readers and competing writers cannot observe a partially staged batch', async t => {
+  const dir = await temporary(t); await applyRequest(dir, request());
+  const before = await readProfile(dir);
+  await applyRequest(dir, request(before.hash, [write('identity/index.md', 'new'), write('growth/index.md', 'life')]), {
+    beforeCommit: async () => {
+      await assert.rejects(readProfile(dir), { code: 'WRITE_LOCKED' });
+      await assert.rejects(applyRequest(dir, request(before.hash)), { code: 'WRITE_LOCKED' });
+      await assert.rejects(recoverWrite(dir), { code: 'WRITE_LOCKED' });
+    }
+  });
+  assert.equal((await readProfile(dir)).documents.length, 2);
+});
+test('chapters require an index and whole-module deletion leaves no hidden snapshots', async t => {
+  const dir = await temporary(t);
+  await assert.rejects(applyRequest(dir, request(undefined, [write('growth/childhood.md', 'childhood')])));
+  await applyRequest(dir, request(undefined, [write('growth/index.md', '# 经历\n\n[童年](childhood.md)'), write('growth/childhood.md', 'Private childhood')]));
+  const before = await readProfile(dir);
+  await assert.rejects(applyRequest(dir, request(before.hash, [{ type: 'delete', path: 'growth/index.md' }])));
+  await applyRequest(dir, request(before.hash, before.documents.map(d => ({ type: 'delete', path: d.path }))));
+  assert.deepEqual((await readProfile(dir)).documents, []);
+  assert.deepEqual(await fs.readdir(path.join(dir, 'profile')), []);
+  assert.deepEqual(await fs.readdir(dir), ['profile']);
+});
+test('missing authorization, old record fields, frontmatter, oversized text and unsafe paths are rejected', async t => {
+  const dir = await temporary(t);
+  const cases = [
+    { ...request(), authorization: { userRequested: false, intent: 'update' } },
+    { ...request(), baseHash: 'wrong' },
+    { ...request(), operations: [ { type: 'upsert', record: { status: 'imported' } } ] },
+    request(undefined, [write('identity/index.md', '---\nstatus: confirmed\n---\ntext')]),
+    request(undefined, [write('identity/index.md', 'x'.repeat(1024 * 1024 + 1))]),
+    request(undefined, [write('identity/index.md', 'a\0b')]),
+    request(undefined, [write('identity/index.md'), write('identity/index.md')]),
+    request(undefined, [write('unknown/index.md')]),
+    request(undefined, [write('/identity/index.md')]),
+    request(undefined, [write('identity\\index.md')]),
+    request(undefined, [write('identity/index.md', 'valid'), { type: 'delete', path: 'identity/other.md', markdown: 'hidden' }])
   ];
-  const unknown = request(1); unknown.operations.push({ type: 'delete-all' }); changes.push(unknown);
-  for (const change of changes) await assert.rejects(applyRequest(dir, change));
-  assert.deepEqual(await fs.readFile(path.join(dir, 'store.json')), before);
+  for (const payload of cases) await assert.rejects(applyRequest(dir, payload));
+  assert.deepEqual(await fs.readdir(dir), []);
 });
-test('advice reads, history and draft reads do not touch the store bytes or modification time', async t => {
+test('profile and data directory symlinks cannot read or overwrite unrelated files', async t => {
+  const root = await temporary(t); const outside = path.join(root, 'outside'); const dir = path.join(root, 'data');
+  await fs.mkdir(outside); await fs.mkdir(dir); await fs.writeFile(path.join(outside, 'index.md'), 'keep');
+  await fs.symlink(outside, path.join(dir, 'profile'));
+  await assert.rejects(readProfile(dir), { code: 'UNSAFE_PATH' });
+  await assert.rejects(applyRequest(dir, request()), { code: 'UNSAFE_PATH' });
+  const linked = path.join(root, 'linked'); await fs.symlink(outside, linked);
+  await assert.rejects(applyRequest(linked, request()), { code: 'UNSAFE_PATH' });
+  assert.equal(await fs.readFile(path.join(outside, 'index.md'), 'utf8'), 'keep');
+});
+test('failed staging cleans transient copies without modifying the original profile', async t => {
+  const dir = await temporary(t); await applyRequest(dir, request()); const before = await readProfile(dir);
+  await assert.rejects(applyRequest(dir, request(before.hash, [write('identity/index.md', 'new')]), { beforeCommit: () => { throw new Error('simulated failure'); } }));
+  assert.deepEqual(await readProfile(dir), before);
+  assert.deepEqual(await fs.readdir(dir), ['profile']);
+});
+test('explicit recovery restores an interrupted directory switch after the writer exited', async t => {
+  const dir = await temporary(t); await applyRequest(dir, request()); const before = await readProfile(dir);
+  const { stdout } = await exec(process.execPath, ['-e', 'process.stdout.write(String(process.pid))']);
+  const lock = path.join(dir, '.write-lock'); await fs.mkdir(lock);
+  await fs.writeFile(path.join(lock, 'owner.json'), JSON.stringify({ pid: Number(stdout), host: os.hostname() }));
+  await fs.rename(path.join(dir, 'profile'), path.join(lock, 'original')); await fs.mkdir(path.join(lock, 'stage'));
+  assert.equal((await recoverWrite(dir)).recovered, true);
+  assert.deepEqual(await readProfile(dir), before);
+  assert.deepEqual(await fs.readdir(dir), ['profile']);
+});
+test('unknown locks and chapter symlinks are preserved for manual inspection', async t => {
+  const dir = await temporary(t); await fs.mkdir(path.join(dir, '.write-lock'));
+  await assert.rejects(recoverWrite(dir), { code: 'UNKNOWN_LOCK' });
+  await fs.rm(path.join(dir, '.write-lock'), { recursive: true });
+  await applyRequest(dir, request());
+  await fs.symlink(path.join(dir, 'profile/identity/index.md'), path.join(dir, 'profile/identity/linked.md'));
+  await assert.rejects(readProfile(dir), { code: 'UNSAFE_PATH' });
+});
+test('Finder housekeeping files do not prevent reading or saving Markdown', async t => {
   const dir = await temporary(t); await applyRequest(dir, request());
-  const file = path.join(dir, 'store.json'); const before = await fs.readFile(file); const mtime = (await fs.stat(file)).mtimeMs;
-  for (let i = 0; i < 3; i++) { view(await readStore(dir), { domain: 'identity' }); historyView(await readStore(dir)); view(await readStore(dir), { drafts: true }); }
-  assert.deepEqual(await fs.readFile(file), before); assert.equal((await fs.stat(file)).mtimeMs, mtime);
+  await fs.writeFile(path.join(dir, 'profile/.DS_Store'), 'finder'); await fs.writeFile(path.join(dir, 'profile/identity/.DS_Store'), 'finder');
+  const current = await readProfile(dir); assert.equal(current.documents.length, 1);
+  await applyRequest(dir, request(current.hash, [write('identity/index.md', 'Updated')]));
+  assert.equal((await readProfile(dir)).documents[0].markdown, 'Updated');
+});
+test('an over-limit multi-file profile is rejected before replacing any files', async t => {
+  const dir = await temporary(t); await applyRequest(dir, request()); const before = await readProfile(dir);
+  const operations = ['identity','motivation','traits','capabilities','growth'].map(domain => write(`${domain}/index.md`, 'x'.repeat(1024 * 1024)));
+  await assert.rejects(applyRequest(dir, request(before.hash, operations)), { code: 'PROFILE_TOO_LARGE' });
+  assert.deepEqual(await readProfile(dir), before); assert.deepEqual(await fs.readdir(dir), ['profile']);
 });
