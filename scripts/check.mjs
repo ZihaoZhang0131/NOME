@@ -8,7 +8,10 @@ async function files(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   return (await Promise.all(entries.map(e => e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]))).flat();
 }
-const checked = [...await files(path.join(root, 'skills')), ...await files(path.join(root, 'scripts')), ...await files(path.join(root, 'tests'))];
+const checked = [
+  ...['README.md', 'PRODUCT.md', 'DESIGN.md'].map(file => path.join(root, file)),
+  ...(await Promise.all(['skills', 'scripts', 'tests', 'docs', 'evals'].map(dir => files(path.join(root, dir))))).flat()
+];
 for (const file of checked) {
   if (/\.(mjs|js)$/.test(file)) execFileSync(process.execPath, ['--check', file], { stdio: 'pipe' });
   if (file.endsWith('.json')) JSON.parse(await fs.readFile(file, 'utf8'));

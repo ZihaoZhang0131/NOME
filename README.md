@@ -73,20 +73,6 @@ npm run demo
 
 演示不读取个人资料，详情页标明“虚构示例”。Ctrl+C 停止服务。仅监听 127.0.0.1，端口占用时另选端口，以终端实际地址为准。Markdown 安全渲染为文本与文档结构，不执行 HTML，也不自动请求图片或外部素材。
 
-## 从 0.1 迁移
-
-已有 store.json 的用户升级后，请对 Agent 说：`帮我把旧 NOME 档案迁移成 Markdown，先看一下内容。`
-
-也可在源码目录查看迁移预览：
-
-```sh
-node skills/nome/scripts/nome.mjs migrate
-```
-
-预览不改原文件。Agent 整理候选、合并重复并解决冲突，按你选择的范围迁移。旧草稿、未分类内容和不公开领域不默认导入；接受的内容直接成为正式正文。
-
-旧 store.json 原位保留作为迁移回退副本，不再参与正式读取。是否清理由你决定。已存在 Markdown 档案时拒绝重复迁移。安装或升级 Skill 不自动执行个人数据迁移。
-
 ## 升级 卸载与诊断
 
 源码更新后升级已安装的副本：
@@ -105,7 +91,7 @@ node skills/nome/scripts/nome.mjs uninstall --agent codex
 
 升级和卸载都保留个人数据。doctor 只读检查环境、档案、安装和写锁。遇到中断写入，确认原进程已退出后显式运行 recover；活跃进程或不明锁不会被自动清理。
 
-详细读写、迁移和恢复协议见 [CLI 协议](skills/nome/references/protocol.md)。
+已有 JSON 档案可通过显式预览与迁移转换为 Markdown。详细读写、迁移和恢复协议见 [CLI 协议](skills/nome/references/protocol.md)。
 
 ## 验证与分发
 
@@ -122,8 +108,18 @@ npm install -g ./nome-skill-0.2.0.tgz
 nome install --agent both
 ```
 
-也可解压并使用源码脚本安装。Skill 自带脚本和页面，安装后不依赖源码目录或全局命令。仓库 private，不向公共 npm 自动发布。分发包只包含 Skill、README 和 package.json，不包含个人档案、开发测试或机器路径。
+也可解压并使用源码脚本安装。Skill 自带脚本和页面，安装后不依赖源码目录或全局命令。package.json 设置为 private，不向公共 npm 自动发布。分发包只包含 Skill、README 和 package.json，不包含个人档案、开发测试或机器路径。
 
-实际验证范围见 [验证记录](docs/verification.md)，真实对话场景见 [行为评测](evals/scenarios.md)。自动化测试不证明模型必然遵循问答方式。
+验证命令与范围见 [验证说明](docs/verification.md)，对话行为验收见 [评测场景](evals/scenarios.md)。自动化测试不代替真实对话验收。
+
+## 项目结构
+
+- `skills/nome/`：可独立安装的 Skill、脚本、页面与本地素材。
+- `tests/`：读写、安装、接口和轨道等自动化测试。
+- `scripts/`：检查与打包工具。
+- `docs/`：最终界面预览与验证说明。
+- [产品说明](PRODUCT.md) / [设计规范](DESIGN.md)：当前产品边界与界面规则。
 
 行星纹理采用 Solar System Scope / INOVE 的 CC BY 4.0 贴图：[原始来源](https://www.solarsystemscope.com/textures/)，[本地素材说明](skills/nome/assets/textures/CREDITS.md)。
+
+紫色星空背景来自 Brice Ménard 与 Claude Science 制作的全天紫外星图，见 [Anthropic 原文](https://www.anthropic.com/research/the-missing-map-of-the-sky)；按 CC BY 4.0 使用，具体署名与展示调整见 [素材说明](skills/nome/assets/textures/CREDITS.md)。

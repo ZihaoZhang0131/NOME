@@ -4,3 +4,6 @@ dist/
 .DS_Store
 *.tgz
 coverage/
+
+# Local design review artifacts
+.impeccable/

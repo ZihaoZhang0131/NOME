@@ -40,7 +40,7 @@ summary { cursor: pointer; touch-action: manipulation; }
 .sr-only { position: absolute; top: 0; left: 0; margin: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .universe { position: relative; min-height: 100svh; overflow: clip; isolation: isolate; background: #03070e; }
 .universe::before, .universe::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
-.universe::before { z-index: -2; background: url('/textures/2k_stars_milky_way.jpg') center 48% / cover no-repeat; filter: brightness(2.8) saturate(.85); }
+.universe::before { z-index: -2; inset: -25%; background: url('/textures/ultraviolet-sky.webp') center 48% / cover no-repeat; filter: brightness(.72) saturate(.95); }
 .universe::after { z-index: -1; background: radial-gradient(ellipse at 50% 46%, transparent 24%, #02050cb0 100%); }
 .star-stage { --wordmark-size: clamp(48px, 7vw, 96px); --stage-gap: clamp(24px, 4svh, 48px); --stage-padding: clamp(24px, 4svh, 48px); position: relative; width: 100%; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--stage-gap); padding: var(--stage-padding) 24px; }
 .brand-wordmark { position: relative; flex: none; margin: 0; pointer-events: none; user-select: none; font-family: 'NOME Wordmark', sans-serif; font-size: var(--wordmark-size); font-weight: 400; line-height: 1; letter-spacing: .16em; text-indent: .16em; color: #edf4f0; white-space: nowrap; text-shadow: 0 2px 3px #000c, 0 0 36px #000b; }

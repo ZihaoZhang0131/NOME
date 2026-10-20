@@ -21,7 +21,6 @@ const fragmentSource = `
   uniform sampler2D surfaceMap;
   uniform sampler2D cloudMap;
   uniform float longitude;
-  uniform float isSun;
   uniform float hasClouds;
   void main() {
     float radius = dot(point, point);
@@ -32,12 +31,12 @@ const fragmentSource = `
     vec3 color = texture2D(surfaceMap, uv).rgb;
     float cloud = texture2D(cloudMap, uv).r * .83 * hasClouds;
     color = mix(color, vec3(245. / 255.), cloud);
-    float light = mix(.56 + depth * .44, .72 + depth * .36, isSun);
+    float light = .56 + depth * .44;
     float alpha = clamp((1. - sqrt(radius)) * 384., 0., 1.);
     gl_FragColor = vec4(color * light, alpha);
   }
 `;
-function gpuSphere(gl, map, cloud, sun) {
+function gpuSphere(gl, map, cloud) {
   const shaders = [];
   const textures = [];
   const program = gl.createProgram();
@@ -73,7 +72,6 @@ function gpuSphere(gl, map, cloud, sun) {
     });
     gl.uniform1i(gl.getUniformLocation(program, 'surfaceMap'), 0);
     gl.uniform1i(gl.getUniformLocation(program, 'cloudMap'), 1);
-    gl.uniform1f(gl.getUniformLocation(program, 'isSun'), sun ? 1 : 0);
     gl.uniform1f(gl.getUniformLocation(program, 'hasClouds'), cloud ? 1 : 0);
     const longitude = gl.getUniformLocation(program, 'longitude');
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -85,7 +83,7 @@ function gpuSphere(gl, map, cloud, sun) {
 }
 // Keep axial rotation available when GPU rendering is unavailable. Cache projection
 // coordinates and limit this smaller CPU canvas to 20 fps; never reproject per frame.
-function cpuSphere(canvas, map, cloud, sun) {
+function cpuSphere(canvas, map, cloud) {
   const size = 256;
   canvas.width = size; canvas.height = size;
   const context = canvas.getContext('2d');
@@ -102,7 +100,7 @@ function cpuSphere(canvas, map, cloud, sun) {
     const depth = Math.sqrt(1 - radius);
     samples.push({ target: (y * size + x) * 4, u: .5 + Math.atan2(nx, depth) / (2 * Math.PI),
       row: Math.min(map.height - 1, Math.floor((.5 + Math.asin(ny) / Math.PI) * map.height)) * map.width,
-      light: sun ? .72 + depth * .36 : .56 + depth * .44 });
+      light: .56 + depth * .44 });
     output.data[(y * size + x) * 4 + 3] = Math.min(1, (1 - Math.sqrt(radius)) * size / 2) * 255;
   }
   return { dispose() {}, render(turn) {
@@ -114,12 +112,12 @@ function cpuSphere(canvas, map, cloud, sun) {
     context.putImageData(output, 0, 0);
   } };
 }
-export async function paintSphere(canvas, texture, { sun = false, clouds = false, period = 180000 } = {}) {
+export async function paintSphere(canvas, texture, { clouds = false, period = 180000 } = {}) {
   try {
     const [map, cloud] = await Promise.all([image(texture), clouds ? image('earth_clouds') : null]);
     canvas.width = 768; canvas.height = 768;
     const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false, antialias: false });
-    let painter = gl ? gpuSphere(gl, map, cloud, sun) : cpuSphere(canvas, map, cloud, sun);
+    let painter = gl ? gpuSphere(gl, map, cloud) : cpuSphere(canvas, map, cloud);
     let lastTime = -Infinity, elapsed = 0, disposed = false;
     const render = time => {
       elapsed = time;
@@ -129,7 +127,7 @@ export async function paintSphere(canvas, texture, { sun = false, clouds = false
     };
     const lost = event => { event.preventDefault(); canvas.dataset.loaded = 'restoring'; };
     const restored = () => {
-      painter.dispose(); painter = gpuSphere(gl, map, cloud, sun);
+      painter.dispose(); painter = gpuSphere(gl, map, cloud);
       render(elapsed); canvas.dataset.loaded = 'true';
     };
     canvas.addEventListener('webglcontextlost', lost);
