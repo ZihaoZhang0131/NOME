@@ -1,4 +1,11 @@
 @font-face {
+  font-family: 'NOME Wordmark';
+  src: url('/fonts/michroma-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
   font-family: 'NOME Display';
   src: url('/fonts/noto-sans-sc-display.ttf') format('truetype');
   font-weight: 500;
@@ -31,9 +38,15 @@ summary { cursor: pointer; touch-action: manipulation; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
 [hidden] { display: none !important; }
 .sr-only { position: absolute; top: 0; left: 0; margin: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.universe { position: relative; min-height: 100svh; overflow: clip; background: radial-gradient(ellipse at 50% 50%, #193b2e55, transparent 58%); }
-.star-stage { width: 100%; min-height: 100svh; display: grid; place-items: center; padding: 24px; }
-.atlas { position: relative; width: min(86vw, 92svh, 930px); aspect-ratio: 600 / 560; isolation: isolate; }
+.universe { position: relative; min-height: 100svh; overflow: clip; isolation: isolate; background: #03070e; }
+.universe::before, .universe::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
+.universe::before { z-index: -2; background: url('/textures/2k_stars_milky_way.jpg') center 48% / cover no-repeat; filter: brightness(2.8) saturate(.85); }
+.universe::after { z-index: -1; background: radial-gradient(ellipse at 50% 46%, transparent 24%, #02050cb0 100%); }
+.star-stage { --wordmark-size: clamp(48px, 7vw, 96px); --stage-gap: clamp(24px, 4svh, 48px); --stage-padding: clamp(24px, 4svh, 48px); position: relative; width: 100%; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--stage-gap); padding: var(--stage-padding) 24px; }
+.brand-wordmark { position: relative; flex: none; margin: 0; pointer-events: none; user-select: none; font-family: 'NOME Wordmark', sans-serif; font-size: var(--wordmark-size); font-weight: 400; line-height: 1; letter-spacing: .16em; text-indent: .16em; color: #edf4f0; white-space: nowrap; text-shadow: 0 2px 3px #000c, 0 0 36px #000b; }
+.is-exploring .brand-wordmark { opacity: 0; visibility: hidden; }
+/* A compact scene frame reserves the full orbit, hovered bodies and parallax below the wordmark. */
+.atlas { position: relative; flex: none; width: min(86vw, 92svh, 930px, calc((100svh - var(--wordmark-size) - var(--stage-gap) - 2 * var(--stage-padding)) * 1.5)); aspect-ratio: 600 / 400; isolation: isolate; }
 .atlas-camera, .atlas-depth { position: absolute; inset: 0; }
 .atlas-camera { transform-origin: 0 0; }
 .atlas-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; pointer-events: none; }
@@ -41,36 +54,32 @@ summary { cursor: pointer; touch-action: manipulation; }
 .orbit-back { opacity: .12; stroke-dasharray: 2 5; }
 .orbit-foreground { z-index: 501; }
 .satellite-position { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-.satellite-caption { position: absolute; z-index: 1000; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
-.satellite-caption.is-above .atlas-name { top: calc(var(--body-size) / -2 - 12px); transform: translate(-50%, -100%); }
-/* Keyboard users can always see and reach a focused body, even behind the sun. */
+/* Keep the keyboard-focused body above neighbouring bodies and tracks. */
 .satellite-position:has(:focus-visible) { z-index: 900 !important; }
-.atlas-stars { fill: #d2dfdf; }
-.atlas-center { position: absolute; z-index: 500; left: 50%; top: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 25.333333%; aspect-ratio: 1; border: 0; padding: 0; border-radius: 50%; overflow: hidden; background: #e89630; box-shadow: 0 0 3px 2px #ffe1a7b0, 0 0 20px #ff9b3d55, 0 0 65px #f8852330; }
-.sun-surface, .planet-surface { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; }
-.atlas-center::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: radial-gradient(circle, transparent 48%, #a94d111c 76%, #ffdf8d55); }
-.motion-icon { position: absolute; z-index: 2; top: calc(50% + 25px); width: 16px; height: 16px; fill: none; stroke: #fff5d4; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .8; filter: drop-shadow(0 1px 2px #663009); }
-.atlas-center:hover .motion-icon, .atlas-center:focus-visible .motion-icon { opacity: 1; }
-.play-mark, .atlas-center[aria-pressed=true] .pause-mark, .atlas-center:disabled .motion-icon { display: none; }
-.atlas-center[aria-pressed=true] .play-mark { display: block; }
-.atlas-center:disabled { cursor: default; }
-.atlas-center-name { z-index: 2; text-shadow: 0 2px 8px #713000, 0 1px 3px #713000; color: #fff9eb; font-family: 'NOME Display', 'PingFang SC', sans-serif; font-size: clamp(24px, 4vw, 42px); font-weight: 500; letter-spacing: -.03em; white-space: nowrap; }
-.is-focused .atlas-center-name { font-size: clamp(14px, 2vw, 24px); letter-spacing: 0; }
-.atlas-label { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); width: max(70px, calc(var(--body-size) + 24px)); height: max(78px, calc(var(--body-size) + 30px)); padding: 0; background: transparent; border: 0; border-radius: 50%; }
-.atlas-name { position: absolute; z-index: 4; left: 50%; top: calc(50% + var(--body-size) / 2 + 12px); transform: translateX(-50%); white-space: nowrap; font-size: clamp(12px, 1.1vw, 15px); font-weight: 400; color: #d2deda; letter-spacing: .04em; text-shadow: 0 2px 5px var(--paper); }
+.planet-surface { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; }
+.motion-toggle { position: absolute; z-index: 1001; right: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); opacity: .65; }
+.motion-toggle:hover, .motion-toggle:focus-visible, .motion-toggle[aria-pressed=true] { opacity: 1; }
+.motion-icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.play-mark, .motion-toggle[aria-pressed=true] .pause-mark { display: none; }
+.motion-toggle[aria-pressed=true] .play-mark { display: block; }
+.motion-toggle:disabled { cursor: default; opacity: .3; }
+/* Round 44px minimum targets remain distinct in the compact mobile formation. */
+.atlas-label { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); width: max(44px, calc(var(--body-size) + 16px)); height: max(44px, calc(var(--body-size) + 16px)); padding: 0; background: transparent; border: 0; border-radius: 50%; clip-path: circle(50%); }
+.planet-name { position: absolute; z-index: 3; inset: 0; display: grid; place-items: center; padding: 0 2px; pointer-events: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: clamp(9px, calc(var(--body-size) * .17), 13px); font-weight: 600; line-height: 1; letter-spacing: -.025em; white-space: nowrap; color: #fffef6; text-shadow: 0 1px 2px #000, 0 0 5px #000, 0 0 12px #000b; }
+
 .node-orb { position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -50%); width: var(--body-size); height: var(--body-size); border-radius: 50%; background: #484743; box-shadow: 0 1px 3px #0008; }
-.node-orb::before { content: ''; position: absolute; z-index: 1; inset: 0; border-radius: inherit; background: linear-gradient(var(--light-angle), #000c, #0006 30%, transparent 70%); box-shadow: inset 0 0 3px #0006; }
-.node-orb::after { content: ''; position: absolute; inset: -8px; border: 1px solid #d4e6d780; border-radius: 50%; opacity: 0; }
+.node-orb::before { content: ''; position: absolute; z-index: 1; inset: 0; border-radius: inherit; background: linear-gradient(225deg, #000c, #0006 30%, transparent 70%); box-shadow: inset 0 0 3px #0006; }
+.node-orb::after { content: ''; position: absolute; inset: -6px; border: 1px solid #d4e6d780; border-radius: 50%; opacity: 0; }
 .atlas-label-2 .node-orb { box-shadow: 0 0 1px 1px #9ad8fc80, 0 0 9px #72bfff55; }
-.satellite-caption.is-highlighted .atlas-name { color: #f5fff9; }
+.atlas-label.is-highlighted .planet-name { color: #fff; }
 .atlas-label:focus-visible .node-orb::after, .atlas-label[aria-pressed=true] .node-orb::after { opacity: 1; }
-.is-exploring { background: radial-gradient(ellipse at 25% 50%, #193b2e44, transparent 60%); }
+.is-exploring::after { background: linear-gradient(90deg, #03070e11 10%, #03070e77 42%, #03070ef2 53%, #03070efa); }
 .reading { position: absolute; z-index: 1000; top: 0; right: 0; width: 48%; height: 100svh; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: clamp(32px, 6vh, 72px) clamp(28px, 4vw, 64px); background: transparent; opacity: 0; transform: translateX(24px); }
 .is-exploring .reading { opacity: 1; transform: none; }
 .is-close .atlas-depth { transform: none; transition: none; }
-.is-close .satellite-position:not(.is-selected), .is-close .atlas-center, .is-close .atlas-art { opacity: 0; pointer-events: none; }
+.is-close .satellite-position:not(.is-selected), .is-close .motion-toggle, .is-close .atlas-art { opacity: 0; pointer-events: none; }
 .is-close .satellite-position.is-selected { z-index: 950 !important; }
-.is-close .atlas-name, .is-close .node-orb::after, .is-travelling .atlas-name { opacity: 0; }
+.is-close .planet-name, .is-close .node-orb::after, .is-travelling .planet-name { opacity: 0; }
 .is-close .node-orb::after { display: none; }
 .is-travelling { pointer-events: none; }
 .reading-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 64px; }
@@ -121,9 +130,8 @@ a { color: var(--accent); text-underline-offset: 4px; }
 @media (prefers-reduced-motion: no-preference) {
   .node-orb { transition: transform 180ms var(--ease); }
   .atlas-depth { transform: perspective(1000px) translate3d(calc(var(--pointer-x, 0) * 8px), calc(var(--pointer-y, 0) * 8px), 0) rotateX(calc(var(--pointer-y, 0) * -2deg)) rotateY(calc(var(--pointer-x, 0) * 3deg)); transition: transform .6s var(--ease); }
-  .atlas-stars { translate: calc(var(--pointer-x, 0) * -3px) calc(var(--pointer-y, 0) * -3px); transition: translate .9s var(--ease); }
-  .satellite-position, .atlas-center, .atlas-art, .atlas-name { transition: opacity .35s; }
-  .is-travelling:not(.is-close) .atlas-art, .is-travelling:not(.is-close) .atlas-center,
+  .satellite-position, .motion-toggle, .atlas-art, .brand-wordmark { transition: opacity .35s; }
+  .is-travelling:not(.is-close) .atlas-art, .is-travelling:not(.is-close) .motion-toggle,
   .is-travelling:not(.is-close) .satellite-position:not(.is-selected) { transition-delay: .22s; }
   .reading { transition: opacity .24s, transform .3s var(--ease); }
   .is-exploring .reading { animation: reading-arrive .48s .25s both var(--ease); }
@@ -133,16 +141,13 @@ a { color: var(--accent); text-underline-offset: 4px; }
 .atlas.motion-muted { animation: none; }
 .motion-muted .node-orb { transition: none; }
 @media (max-width: 760px) {
-  .star-stage { padding: 12px; }
-  .atlas { width: min(96vw, 94svh); }
-  .atlas-name { font-size: 12px; }
-  .atlas-center-name { font-size: clamp(20px, 5vw, 30px); }
+  .universe::before { background-size: auto 100%; background-position: 51% center; }
+  .is-exploring::after { background: linear-gradient(180deg, #03070e22 15%, #03070e55 32%, #03070ef5 42%, #03070efa); }
+  .star-stage { --wordmark-size: clamp(40px, 11.5vw, 64px); padding-inline: 12px; }
+  .atlas { width: min(96vw, 94svh, calc((100svh - var(--wordmark-size) - var(--stage-gap) - 2 * var(--stage-padding)) * 1.5)); }
+  .brand-wordmark { letter-spacing: .12em; text-indent: .12em; }
   .reading { top: 40svh; width: 100%; height: 60svh; padding: 12px 24px 32px; }
   .reading-toolbar { margin-bottom: 24px; }
   .markdown-body { font-size: 17px; }
   .domain-nav { display: grid; grid-template-columns: repeat(3, minmax(44px, 1fr)); column-gap: 16px; margin-top: 48px; }
-}
-@media (max-height: 480px) and (min-width: 761px) {
-  .atlas { width: min(70vw, 90svh); }
-  .atlas-label { height: 66px; }
 }

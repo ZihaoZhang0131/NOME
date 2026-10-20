@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { cameraPose } from '../skills/nome/assets/camera.js';
 import { orbits, satellitePosition } from '../skills/nome/assets/orbit.js';
 
-test('camera keeps every selected body in the reading area across viewports and orbital phases', () => {
-  for (const [viewportWidth, viewportHeight] of [[1440, 900], [800, 600], [390, 844], [320, 568]]) {
+test('camera keeps every selected body in the reading area with an offset compact scene across viewports and orbital phases', () => {
+  for (const [viewportWidth, viewportHeight] of [[1440, 900], [800, 600], [900, 320], [390, 844], [320, 568]]) {
     const mobile = viewportWidth <= 760;
     const width = Math.min(viewportWidth * (mobile ? .96 : .86), viewportHeight * (mobile ? .94 : .92), 930);
-    const height = width * 560 / 600;
-    const left = (viewportWidth - width) / 2, top = (viewportHeight - height) / 2;
+    const height = width * 400 / 600;
+    // A header moves the compact scene below the viewport center.
+    const left = (viewportWidth - width) / 2, top = (viewportHeight - height) / 2 + 60;
     orbits.forEach((orbit, i) => {
       for (const elapsed of [0, 15000, 47000]) {
         const point = satellitePosition(i, elapsed);

@@ -7,6 +7,8 @@
   <title>NOME · 个人档案</title>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
+  <link rel="preload" as="image" href="/textures/2k_stars_milky_way.jpg">
+  <link rel="preload" as="font" href="/fonts/michroma-regular.ttf" type="font/ttf" crossorigin>
   <script src="/app.js" type="module"></script>
 </head>
 <body>
@@ -19,6 +21,7 @@
     </section>
     <div id="dashboard" class="universe" hidden>
       <section class="star-stage" aria-label="个人星图">
+        <div class="brand-wordmark" aria-hidden="true">NOME</div>
         <div id="atlas" class="atlas" role="group" aria-label="选择一个领域，探索你的档案"></div>
       </section>
       <section id="detail" class="reading" aria-labelledby="detail-title" hidden>

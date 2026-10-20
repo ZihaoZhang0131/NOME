@@ -18,8 +18,10 @@ const resources = new Map([
   ['/textures/CREDITS.md', ['textures/CREDITS.md', 'text/plain; charset=utf-8']],
   ...['sun', 'mercury', 'venus_atmosphere', 'earth_daymap', 'earth_clouds', 'mars', 'jupiter', 'saturn'].map(name => [`/textures/2k_${name}.jpg`, [`textures/2k_${name}.jpg`, 'image/jpeg']]),
   ['/textures/2k_saturn_ring_alpha.png', ['textures/2k_saturn_ring_alpha.png', 'image/png']],
+  ['/textures/2k_stars_milky_way.jpg', ['textures/2k_stars_milky_way.jpg', 'image/jpeg']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
   ['/fonts/noto-sans-sc-display.ttf', ['fonts/noto-sans-sc-display.ttf', 'font/ttf']],
+  ['/fonts/michroma-regular.ttf', ['fonts/michroma-regular.ttf', 'font/ttf']],
   ['/icon.svg', ['icon.svg', 'image/svg+xml']]
 ]);
 export async function startServer({ dataDir, demo = false, port = 43821 } = {}) {

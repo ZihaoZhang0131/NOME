@@ -22,3 +22,17 @@ The original maps use NASA data and spacecraft imagery with artistic color adjus
 NOME modifications: the original files are unchanged. At runtime, the maps are projected onto spheres with limb shading; Earth clouds are composited over its surface. The Saturn ring strip is retained as an unused source asset; the interface no longer renders rings. Additional directional shading and atmospheric glow are presentation effects.
 
 Body sizes, orbital radii, inclinations and periods are composed for navigation. They are neither an astronomy simulation nor personal-profile scores. The six domain names remain the navigation labels.
+
+## Milky Way background
+
+File: 2k_stars_milky_way.jpg (2048 × 1024, original file unchanged).
+Author: Solar System Scope / INOVE.
+Source: https://www.solarsystemscope.com/textures/
+Download: https://www.solarsystemscope.com/textures/download/2k_stars_milky_way.jpg
+License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
+Retrieved: 2026-10-20.
+
+Presentation: viewport crop, CSS brightness and saturation adjustment, vignette,
+and a dark reading-area overlay. This is a processed sky texture, not a claim
+that the interface reproduces a calibrated astronomical photograph. All files
+are served locally; the browser does not request an external image service.

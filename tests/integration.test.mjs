@@ -91,7 +91,7 @@ test('read-only API serves actual Markdown edits without exposing internal profi
   const dir = path.join(await temporary(t), 'data'); const running = await startServer({ dataDir: dir, port: 0 }); t.after(() => running.close());
   assert.equal(running.server.address().address, '127.0.0.1');
   assert.equal((await fetch(running.url)).status, 200);
-  for (const route of ['markdown.js', 'profile-view.js', 'textures/2k_mercury.jpg']) assert.equal((await fetch(`${running.url}/${route}`)).status, 200);
+  for (const route of ['markdown.js', 'profile-view.js', 'textures/2k_mercury.jpg', 'textures/2k_stars_milky_way.jpg', 'fonts/michroma-regular.ttf']) assert.equal((await fetch(`${running.url}/${route}`)).status, 200);
   const initial = await (await fetch(`${running.url}/api/profile`)).json();
   assert.deepEqual(Object.keys(initial).sort(), ['demo', 'domains']); assert.equal(initial.domains.length, 6);
   await assert.rejects(fs.stat(dir), { code: 'ENOENT' });

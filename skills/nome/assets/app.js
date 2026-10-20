@@ -6,6 +6,8 @@ import { cameraPose, cameraTransform } from './camera.js';
 
 const $ = id => document.getElementById(id);
 const svgNS = 'http://www.w3.org/2000/svg';
+const domainLabels = { identity: 'Identity', motivation: 'Values', traits: 'Traits',
+  capabilities: 'Skills', relationships: 'Bonds', growth: 'Growth' };
 let profile;
 let summary;
 let selected = 'all';
@@ -27,7 +29,6 @@ let cameraAnimation;
 let pendingDomain = null;
 let navigationVersion = 0;
 let satelliteNodes = [];
-let satelliteCaptions = [];
 let satelliteHovered = false;
 let satelliteFocused = false;
 let orbitFrame = 0;
@@ -35,24 +36,31 @@ let orbitElapsed = 0;
 let orbitLastTime = 0;
 let orbitScale = 1;
 let returnFocusDomain = null;
+let sphereMaterials = [];
+
+function addSphere(surface, texture, options) {
+  paintSphere(surface, texture, options).then(material => {
+    if (!material) return;
+    if (!surface.isConnected) { material.dispose(); return; }
+    sphereMaterials.push(material);
+    material.render(orbitElapsed);
+  });
+}
 
 function placeSatellites() {
+  const points = satelliteNodes.map((_, index) => satellitePosition(index, orbitElapsed));
   satelliteNodes.forEach((node, index) => {
-    const point = satellitePosition(index, orbitElapsed);
+    const point = points[index];
     node.style.transform = `translate3d(${point.x * orbitScale}px, ${point.y * orbitScale}px, 0)`;
     node.style.zIndex = String(500 + Math.round(point.z));
     node.style.setProperty('--body-size', `${orbits[index].diameter * orbitScale}px`);
-    node.style.setProperty('--light-angle', `${Math.atan2(point.y, point.x) * 180 / Math.PI + 270}deg`);
-    const caption = satelliteCaptions[index];
-    caption.style.transform = node.style.transform;
-    caption.style.setProperty('--body-size', `${orbits[index].diameter * orbitScale}px`);
-    caption.classList.toggle('is-above', point.y < 0);
   });
 }
 function orbitTick(now) {
   orbitElapsed += orbitLastTime ? Math.min(now - orbitLastTime, 64) : 0;
   orbitLastTime = now;
   placeSatellites();
+  sphereMaterials.forEach(material => material.render(orbitElapsed));
   orbitFrame = requestAnimationFrame(orbitTick);
 }
 function setOrbitRunning(running) {
@@ -66,7 +74,7 @@ function syncMotion() {
   $('atlas').classList.toggle('motion-stopped', orbitStopped);
   setOrbitRunning(!orbitStopped);
   $('atlas').classList.toggle('motion-muted', reducedMotion.matches || motionPaused);
-  const toggle = $('atlas').querySelector('.atlas-center');
+  const toggle = $('atlas').querySelector('.motion-toggle');
   if (toggle) {
     toggle.disabled = reducedMotion.matches || selected !== 'all';
     toggle.setAttribute('aria-pressed', String(motionPaused));
@@ -116,38 +124,29 @@ function svgEl(tag, attributes = {}) {
   return node;
 }
 function renderAtlas() {
+  sphereMaterials.forEach(material => material.dispose());
+  sphereMaterials = [];
   // Equal planet sizes; materials express identity, never profile scores.
-  const svg = svgEl('svg', { viewBox: '0 0 600 560', 'aria-hidden': 'true', class: 'atlas-art' });
-  const defs = svgEl('defs');
-  const glow = svgEl('radialGradient', { id: 'core-light' });
-  [['0%', '#ffb961', '.22'], ['45%', '#e87b29', '.07'], ['100%', '#e87b29', '0']].forEach(([offset, color, opacity]) => glow.append(svgEl('stop', { offset, 'stop-color': color, 'stop-opacity': opacity })));
-  defs.append(glow); svg.append(defs);
-  const stars = svgEl('g', { class: 'atlas-stars' });
-  for (let i = 0; i < 96; i++) {
-    stars.append(svgEl('circle', { cx: 32 + ((i * 137) % 536), cy: 28 + ((i * 97) % 504), r: i % 9 === 0 ? 1.3 : .6, opacity: .12 + (i % 4) * .12 }));
-  }
-  svg.append(stars, svgEl('circle', { cx: 300, cy: 280, r: 180, fill: 'url(#core-light)' }));
-  const foreground = svgEl('svg', { viewBox: '0 0 600 560', 'aria-hidden': 'true', class: 'atlas-art orbit-foreground' });
+  const svg = svgEl('svg', { viewBox: '0 80 600 400', 'aria-hidden': 'true', class: 'atlas-art' });
+  const foreground = svgEl('svg', { viewBox: '0 80 600 400', 'aria-hidden': 'true', class: 'atlas-art orbit-foreground' });
   svg.append(svgEl('path', { d: orbitPath(0, false), class: 'satellite-orbit orbit-back' }));
   foreground.append(svgEl('path', { d: orbitPath(0, true), class: 'satellite-orbit' }));
   const nodes = [];
-  const captions = [];
   summary.domains.forEach((domain, index) => {
     const button = el('button', `atlas-label atlas-label-${index}`);
     button.type = 'button'; button.dataset.domain = domain.id;
     button.setAttribute('aria-pressed', String(selected === domain.id));
-    button.setAttribute('aria-label', `探索${domain.name}`);
+    button.setAttribute('aria-label', `探索${domain.name} · ${domainLabels[domain.id]}`);
     button.setAttribute('aria-controls', 'detail');
-    button.title = `${domain.name} · ${orbits[index].name}`;
+    button.title = `${domainLabels[domain.id]} · ${domain.name} · ${orbits[index].name}`;
     const orb = el('span', 'node-orb');
     const surface = el('canvas', 'planet-surface'); surface.setAttribute('aria-hidden', 'true');
     orb.append(surface);
-    paintSphere(surface, orbits[index].texture, { clouds: index === 2 });
+    addSphere(surface, orbits[index].texture, { clouds: index === 2, period: 180000 + index * 12000 });
+    // The name belongs to the body and shares its hover, depth and motion.
+    const name = el('span', 'planet-name', domainLabels[domain.id]);
+    name.lang = 'en'; name.setAttribute('aria-hidden', 'true'); orb.append(name);
     button.append(orb);
-    // Labels remain readable above the sun while bodies retain their original depth order.
-    const caption = el('div', 'satellite-caption'); caption.dataset.domain = domain.id;
-    caption.setAttribute('aria-hidden', 'true'); caption.append(el('span', 'atlas-name', domain.name));
-    captions.push(caption);
     button.addEventListener('pointerenter', event => { satelliteHovered = event.pointerType === 'mouse'; highlightDomain(domain.id); syncMotion(); });
     button.addEventListener('pointerleave', () => { satelliteHovered = false; highlightDomain(selected); syncMotion(); });
     button.addEventListener('focus', () => { satelliteFocused = button.matches(':focus-visible'); highlightDomain(domain.id); syncMotion(); });
@@ -155,18 +154,15 @@ function renderAtlas() {
     button.addEventListener('click', () => navigate(domain.id, button));
     const position = el('div', 'satellite-position'); position.append(button); nodes.push(position);
   });
-  const center = el('button', 'atlas-center'); center.type = 'button';
+  const toggle = el('button', 'motion-toggle'); toggle.type = 'button';
   const motionIcon = svgEl('svg', { viewBox: '0 0 24 24', class: 'motion-icon', 'aria-hidden': 'true' });
   motionIcon.append(svgEl('path', { d: 'M9 7v10M15 7v10', class: 'pause-mark' }), svgEl('path', { d: 'm9 6 9 6-9 6Z', class: 'play-mark' }));
-  const surface = el('canvas', 'sun-surface'); surface.setAttribute('aria-hidden', 'true');
-  paintSphere(surface, 'sun', { sun: true });
-  center.append(surface, el('span', 'atlas-center-name', 'nome.'), motionIcon);
-  center.addEventListener('click', () => { motionPaused = !motionPaused; syncMotion(); });
-  const depth = el('div', 'atlas-depth'); depth.append(svg, foreground, center, ...nodes, ...captions);
+  toggle.append(motionIcon);
+  toggle.addEventListener('click', () => { motionPaused = !motionPaused; syncMotion(); });
+  const depth = el('div', 'atlas-depth'); depth.append(svg, foreground, ...nodes);
   const camera = el('div', 'atlas-camera'); camera.append(depth);
-  $('atlas').replaceChildren(camera);
+  $('atlas').replaceChildren(camera, toggle);
   satelliteNodes = nodes;
-  satelliteCaptions = captions;
   satelliteHovered = false; satelliteFocused = false;
   orbitScale = $('atlas').clientWidth / 600;
   placeSatellites();
@@ -176,8 +172,7 @@ function renderAtlas() {
 function highlightDomain(id) {
   const domain = summary.domains.find(item => item.id === id);
   $('atlas').classList.toggle('is-focused', Boolean(domain));
-  $('atlas').querySelectorAll('.atlas-label, .satellite-caption').forEach(node => node.classList.toggle('is-highlighted', node.dataset.domain === id));
-  $('atlas').querySelector('.atlas-center-name').textContent = domain ? domain.name : 'nome.';
+  $('atlas').querySelectorAll('.atlas-label').forEach(node => node.classList.toggle('is-highlighted', node.dataset.domain === id));
 }
 function navigate(route) {
   const parts = routeParts(route);
