@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { orbits, sunRadius, projectOrbit, satellitePosition, orbitPath } from '../skills/nome/assets/orbit.js';
 
 test('bodies share one plane and speed and return after a full revolution', () => {
+  assert.equal(new Set(orbits.map(o => o.diameter)).size, 1);
   for (const key of ['radius', 'inclination', 'tilt', 'period']) assert.equal(new Set(orbits.map(o => o[key])).size, 1);
   for (let i = 1; i < 6; i++) {
     assert.equal(orbitPath(i, true), orbitPath(0, true));
@@ -17,8 +18,8 @@ test('bodies share one plane and speed and return after a full revolution', () =
       const p = satellitePosition(i, t);
       assert.equal(p.front, p.z >= 0);
       assert.ok(p.scale > .78 && p.scale < 1.35);
-      assert.ok(Math.abs(p.x) + orbit.diameter * p.scale / 2 < 285);
-      assert.ok(Math.abs(p.y) + orbit.diameter * p.scale / 2 < 260);
+      assert.ok(Math.abs(p.x) + orbit.diameter / 2 < 285);
+      assert.ok(Math.abs(p.y) + orbit.diameter / 2 < 260);
     }
   });
 });
@@ -59,7 +60,7 @@ test('satellites keep 60 degree spacing without catching up or overlapping over 
       const gap = (angle(next) - angle(p) + Math.PI * 2) % (Math.PI * 2);
       assert.ok(Math.abs(gap - Math.PI / 3) < 1e-10);
       for (let j = i + 1; j < 6; j++) {
-        const radii = (orbits[i].diameter * p.scale + orbits[j].diameter * points[j].scale) / 2;
+        const radii = (orbits[i].diameter + orbits[j].diameter) / 2;
         assert.ok(Math.hypot(p.x - points[j].x, p.y - points[j].y) > radii + 8);
       }
     });

@@ -42,6 +42,8 @@ summary { cursor: pointer; touch-action: manipulation; }
 .orbit-back { opacity: .12; stroke-dasharray: 2 5; }
 .orbit-foreground { z-index: 501; }
 .satellite-position { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.satellite-caption { position: absolute; z-index: 1000; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.satellite-caption.is-above .atlas-name { top: calc(var(--body-size) / -2 - 12px); transform: translate(-50%, -100%); }
 /* Keyboard users can always see and reach a focused body, even behind the sun. */
 .satellite-position:has(:focus-visible) { z-index: 900 !important; }
 .atlas-stars { fill: #d2dfdf; }
@@ -54,13 +56,14 @@ summary { cursor: pointer; touch-action: manipulation; }
 .atlas-center[aria-pressed=true] .play-mark { display: block; }
 .atlas-center:disabled { cursor: default; }
 .atlas-center-name { z-index: 2; text-shadow: 0 2px 8px #713000, 0 1px 3px #713000; color: #fff9eb; font-family: 'NOME Display', 'PingFang SC', sans-serif; font-size: clamp(24px, 4vw, 42px); font-weight: 500; letter-spacing: -.03em; white-space: nowrap; }
+.is-focused .atlas-center-name { font-size: clamp(14px, 2vw, 24px); letter-spacing: 0; }
 .atlas-label { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); width: max(70px, calc(var(--body-size) + 24px)); height: max(78px, calc(var(--body-size) + 30px)); padding: 0; background: transparent; border: 0; border-radius: 50%; }
-.atlas-name { position: absolute; z-index: 4; left: 50%; top: calc(50% + var(--body-size) / 2 + 12px); transform: translateX(-50%); white-space: nowrap; font-size: clamp(14px, 1.4vw, 18px); font-weight: 400; color: #d2deda; letter-spacing: .12em; text-shadow: 0 2px 5px var(--paper); }
+.atlas-name { position: absolute; z-index: 4; left: 50%; top: calc(50% + var(--body-size) / 2 + 12px); transform: translateX(-50%); white-space: nowrap; font-size: clamp(12px, 1.1vw, 15px); font-weight: 400; color: #d2deda; letter-spacing: .04em; text-shadow: 0 2px 5px var(--paper); }
 .node-orb { position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -50%); width: var(--body-size); height: var(--body-size); border-radius: 50%; background: #484743; box-shadow: 0 1px 3px #0008; }
 .node-orb::before { content: ''; position: absolute; z-index: 1; inset: 0; border-radius: inherit; background: linear-gradient(var(--light-angle), #000c, #0006 30%, transparent 70%); box-shadow: inset 0 0 3px #0006; }
 .node-orb::after { content: ''; position: absolute; inset: -8px; border: 1px solid #d4e6d780; border-radius: 50%; opacity: 0; }
 .atlas-label-2 .node-orb { box-shadow: 0 0 1px 1px #9ad8fc80, 0 0 9px #72bfff55; }
-.atlas-label:hover .atlas-name, .atlas-label:focus-visible .atlas-name, .atlas-label[aria-pressed=true] .atlas-name { color: #f5fff9; }
+.satellite-caption.is-highlighted .atlas-name { color: #f5fff9; }
 .atlas-label:focus-visible .node-orb::after, .atlas-label[aria-pressed=true] .node-orb::after { opacity: 1; }
 .atlas-label.state-withheld .node-orb::after, .atlas-label.state-not_applicable .node-orb::after { border-style: dashed; }
 .is-exploring { background: radial-gradient(ellipse at 25% 50%, #193b2e44, transparent 60%); }
@@ -78,6 +81,9 @@ summary { cursor: pointer; touch-action: manipulation; }
 .text-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 h2 { font-family: 'NOME Display', 'PingFang SC', sans-serif; font-size: clamp(30px, 3.5vw, 48px); font-weight: 500; line-height: 1.4; letter-spacing: -.025em; margin: 0; text-wrap: balance; }
 #detail-title:focus { outline: none; }
+.detail-definition { font-size: 16px; line-height: 1.8; color: var(--muted); margin: 16px 0 0; }
+.unclassified-records { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--line); }
+.unclassified-records > summary { min-height: 44px; padding-block: 12px; color: var(--pending); }
 .detail-description { font-size: 13px; color: var(--muted); margin: 16px 0 40px; }
 .record + .record { margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--line); }
 .record-status { margin: 0 0 12px; font-size: 12px; color: var(--pending); }
@@ -119,7 +125,7 @@ h2 { font-family: 'NOME Display', 'PingFang SC', sans-serif; font-size: clamp(30
 @media (max-width: 760px) {
   .star-stage { padding: 12px; }
   .atlas { width: min(96vw, 94svh); }
-  .atlas-name { font-size: 14px; }
+  .atlas-name { font-size: 12px; }
   .atlas-center-name { font-size: clamp(20px, 5vw, 30px); }
   .reading { top: 40svh; width: 100%; height: 60svh; padding: 12px 24px 32px; }
   .reading-toolbar { margin-bottom: 24px; }

@@ -60,7 +60,7 @@ test('saved interview drafts are excluded from advice and promote with stable ID
 test('save-progress cannot modify official records or domain states', async t => {
   const dir = await temporary(t);
   await assert.rejects(applyRequest(dir, request(0, [record({ status: 'imported' })], { intent: 'save-progress' })));
-  const change = request(0, [], { intent: 'save-progress' }); change.operations = [{ type: 'domain', domain: 'goals', state: 'withheld' }];
+  const change = request(0, [], { intent: 'save-progress' }); change.operations = [{ type: 'domain', domain: 'motivation', state: 'withheld' }];
   await assert.rejects(applyRequest(dir, change));
 });
 test('uncertain imports cannot replace a confirmed record and whole batch remains atomic', async t => {
@@ -79,7 +79,7 @@ test('stale versions and concurrent writers cannot lose updates', async t => {
 });
 test('skipped domains are excluded from advice but remain recoverable on explicit reactivation', async t => {
   const dir = await temporary(t); await applyRequest(dir, request());
-  const change = request(1); change.operations = [{ type: 'domain', domain: 'constraints', state: 'withheld' }];
+  const change = request(1); change.operations = [{ type: 'domain', domain: 'identity', state: 'withheld' }];
   await applyRequest(dir, change);
   assert.equal(view(await readStore(dir)).records.length, 0);
   assert.equal(view(await readStore(dir), { includeInactive: true }).records.length, 1);
@@ -134,6 +134,6 @@ test('invalid operation, long content, unknown fields, domain and malformed IDs 
 test('advice reads, history and draft reads do not touch the store bytes or modification time', async t => {
   const dir = await temporary(t); await applyRequest(dir, request());
   const file = path.join(dir, 'store.json'); const before = await fs.readFile(file); const mtime = (await fs.stat(file)).mtimeMs;
-  for (let i = 0; i < 3; i++) { view(await readStore(dir), { domain: 'constraints' }); historyView(await readStore(dir)); view(await readStore(dir), { drafts: true }); }
+  for (let i = 0; i < 3; i++) { view(await readStore(dir), { domain: 'identity' }); historyView(await readStore(dir)); view(await readStore(dir), { drafts: true }); }
   assert.deepEqual(await fs.readFile(file), before); assert.equal((await fs.stat(file)).mtimeMs, mtime);
 });

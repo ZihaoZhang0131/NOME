@@ -7,8 +7,8 @@ const $ = id => document.getElementById(id);
 const svgNS = 'http://www.w3.org/2000/svg';
 const sourceNames = { user: '你提供的内容', 'codex-memory': 'Codex 记忆', 'claude-memory': 'Claude Code 记忆', document: '指定资料', inference: 'Agent 推测' };
 const statusNames = { confirmed: '已确认', imported: '导入资料 · 待核实', inferred: '推测 · 待核实' };
-const shortNames = { context: '当下', experience: '经历', goals: '方向', values: '价值', constraints: '边界', preferences: '偏好' };
-const emptyCopy = { context: '最近的你，在做什么？', experience: '那些走过的路。', goals: '下一站，想去哪里？', values: '什么对你更重要？', constraints: '给生活留出边界。', preferences: '找到舒服的协作方式。' };
+// Original names are provenance only; all current classification comes from the six API domains.
+const legacyNames = { context: '当前处境', experience: '经历与能力', goals: '目标与方向', values: '价值取舍', constraints: '现实约束', preferences: '协作偏好' };
 let profile;
 let summary;
 let selected = 'all';
@@ -21,6 +21,7 @@ let cameraAnimation;
 let pendingDomain = null;
 let navigationVersion = 0;
 let satelliteNodes = [];
+let satelliteCaptions = [];
 let satelliteHovered = false;
 let satelliteFocused = false;
 let orbitFrame = 0;
@@ -32,10 +33,14 @@ let returnFocusDomain = null;
 function placeSatellites() {
   satelliteNodes.forEach((node, index) => {
     const point = satellitePosition(index, orbitElapsed);
-    node.style.transform = `translate3d(${point.x * orbitScale}px, ${point.y * orbitScale}px, 0) scale(${point.scale})`;
+    node.style.transform = `translate3d(${point.x * orbitScale}px, ${point.y * orbitScale}px, 0)`;
     node.style.zIndex = String(500 + Math.round(point.z));
     node.style.setProperty('--body-size', `${orbits[index].diameter * orbitScale}px`);
     node.style.setProperty('--light-angle', `${Math.atan2(point.y, point.x) * 180 / Math.PI + 270}deg`);
+    const caption = satelliteCaptions[index];
+    caption.style.transform = node.style.transform;
+    caption.style.setProperty('--body-size', `${orbits[index].diameter * orbitScale}px`);
+    caption.classList.toggle('is-above', point.y < 0);
   });
 }
 function orbitTick(now) {
@@ -118,7 +123,7 @@ function domainNote(domain) {
 }
 
 function renderAtlas() {
-  // Planet sizes express visual identity only, never profile scores.
+  // Equal planet sizes; materials express identity, never profile scores.
   const svg = svgEl('svg', { viewBox: '0 0 600 560', 'aria-hidden': 'true', class: 'atlas-art' });
   const defs = svgEl('defs');
   const glow = svgEl('radialGradient', { id: 'core-light' });
@@ -133,18 +138,23 @@ function renderAtlas() {
   svg.append(svgEl('path', { d: orbitPath(0, false), class: 'satellite-orbit orbit-back' }));
   foreground.append(svgEl('path', { d: orbitPath(0, true), class: 'satellite-orbit' }));
   const nodes = [];
+  const captions = [];
   summary.domains.forEach((domain, index) => {
     const button = el('button', `atlas-label atlas-label-${index} state-${domain.state}`);
     button.type = 'button'; button.dataset.domain = domain.id;
     button.setAttribute('aria-pressed', String(selected === domain.id));
     button.setAttribute('aria-label', `探索${domain.name}，${domainNote(domain)}`);
     button.setAttribute('aria-controls', 'detail');
-    button.title = `${shortNames[domain.id]} · ${orbits[index].name}`;
+    button.title = `${domain.name} · ${orbits[index].name}`;
     const orb = el('span', 'node-orb');
     const surface = el('canvas', 'planet-surface'); surface.setAttribute('aria-hidden', 'true');
     orb.append(surface);
     paintSphere(surface, orbits[index].texture, { clouds: index === 2 });
-    button.append(orb, el('span', 'atlas-name', shortNames[domain.id]));
+    button.append(orb);
+    // Labels remain readable above the sun while bodies retain their original depth order.
+    const caption = el('div', 'satellite-caption'); caption.dataset.domain = domain.id;
+    caption.setAttribute('aria-hidden', 'true'); caption.append(el('span', 'atlas-name', domain.name));
+    captions.push(caption);
     button.addEventListener('pointerenter', event => { satelliteHovered = event.pointerType === 'mouse'; highlightDomain(domain.id); syncMotion(); });
     button.addEventListener('pointerleave', () => { satelliteHovered = false; highlightDomain(selected); syncMotion(); });
     button.addEventListener('focus', () => { satelliteFocused = button.matches(':focus-visible'); highlightDomain(domain.id); syncMotion(); });
@@ -159,10 +169,11 @@ function renderAtlas() {
   paintSphere(surface, 'sun', { sun: true });
   center.append(surface, el('span', 'atlas-center-name', 'nome.'), motionIcon);
   center.addEventListener('click', () => { motionPaused = !motionPaused; syncMotion(); });
-  const depth = el('div', 'atlas-depth'); depth.append(svg, foreground, center, ...nodes);
+  const depth = el('div', 'atlas-depth'); depth.append(svg, foreground, center, ...nodes, ...captions);
   const camera = el('div', 'atlas-camera'); camera.append(depth);
   $('atlas').replaceChildren(camera);
   satelliteNodes = nodes;
+  satelliteCaptions = captions;
   satelliteHovered = false; satelliteFocused = false;
   orbitScale = $('atlas').clientWidth / 600;
   placeSatellites();
@@ -172,8 +183,8 @@ function renderAtlas() {
 function highlightDomain(id) {
   const domain = summary.domains.find(item => item.id === id);
   $('atlas').classList.toggle('is-focused', Boolean(domain));
-  $('atlas').querySelectorAll('.atlas-label').forEach(node => node.classList.toggle('is-highlighted', node.dataset.domain === id));
-  $('atlas').querySelector('.atlas-center-name').textContent = domain ? shortNames[domain.id] : 'nome.';
+  $('atlas').querySelectorAll('.atlas-label, .satellite-caption').forEach(node => node.classList.toggle('is-highlighted', node.dataset.domain === id));
+  $('atlas').querySelector('.atlas-center-name').textContent = domain ? domain.name : 'nome.';
 }
 function navigate(id) {
   const target = summary.domains.some(domain => domain.id === id) ? id : 'all';
@@ -239,13 +250,14 @@ async function transitionDomain(id, { focus = false, animate = true, force = fal
   $('announcement').textContent = domain ? `正在探索${domain.name}` : '已返回个人星图';
   syncMotion();
 }
-function renderRecord(record, draft = false) {
+function renderRecord(record, draft = false, unclassified = false) {
   const article = el('article', `record ${draft ? 'draft-record' : ''}`);
-  article.append(el('p', `record-status status-${record.status}`, draft ? '草稿 · 尚未纳入正式档案' : status(record)), el('p', 'record-content', record.content));
+  article.append(el('p', `record-status status-${record.status}`, unclassified ? `待分类 · ${draft ? '草稿' : status(record)}` : draft ? '草稿 · 尚未纳入正式档案' : status(record)), el('p', 'record-content', record.content));
   const details = el('details', 'record-meta');
   details.append(el('summary', '', '来源与时间'));
   const list = el('dl');
   const fields = [['来源', sourceNames[record.source.type] || record.source.type], ['确认时间', date(record.confirmedAt, true)], ['更新于', date(record.updatedAt, true)]];
+  if (record.legacyDomain) fields.push(['原分类', legacyNames[record.legacyDomain] || record.legacyDomain]);
   if (record.source.reference) fields.splice(1, 0, ['参考', record.source.reference]);
   fields.forEach(([name, value]) => list.append(el('dt', '', name), el('dd', '', value)));
   details.append(list); article.append(details);
@@ -253,6 +265,7 @@ function renderRecord(record, draft = false) {
 }
 function renderDetail(domain) {
   $('detail-title').textContent = domain.name;
+  $('detail-definition').textContent = domain.description;
   $('detail-description').textContent = domainNote(domain);
   const content = $('detail-records'); content.replaceChildren();
   if (domain.state === 'withheld' || domain.state === 'not_applicable') {
@@ -260,7 +273,17 @@ function renderDetail(domain) {
   } else {
     domain.records.forEach(record => content.append(renderRecord(record)));
     domain.drafts.forEach(record => content.append(renderRecord(record, true)));
-    if (!domain.records.length && !domain.drafts.length) content.append(el('p', 'detail-empty', emptyCopy[domain.id]), el('p', 'muted', domain.prompts.join(' · ')), el('p', 'detail-prompt', '在 Agent 对话中，说「进入 NOME 问答模式」。'));
+    if (!domain.records.length && !domain.drafts.length) content.append(el('p', 'detail-empty', '这一方面还没有记录。'), el('p', 'muted', domain.prompts.join(' · ')), el('p', 'detail-prompt', '在 Agent 对话中，说「进入 NOME 问答模式」。'));
+  }
+  if (domain.state !== 'withheld' && domain.state !== 'not_applicable') content.append(el('p', 'detail-prompt', `在 Agent 对话中，说「补充我的${domain.name}」。`));
+  const pending = profile.unclassified || { records: [], drafts: [] };
+  const count = pending.records.length + pending.drafts.length;
+  if (count) {
+    const section = el('details', 'unclassified-records');
+    section.append(el('summary', '', `待分类的旧资料（${count}）`), el('p', 'muted', '原文、来源与时间均保留；这些资料尚不属于任何新分类，不用于日常建议。在 Agent 对话中确认归属后再整理。'));
+    pending.records.forEach(record => section.append(renderRecord(record, false, true)));
+    pending.drafts.forEach(record => section.append(renderRecord(record, true, true)));
+    content.append(section);
   }
 }
 function render() {
@@ -269,7 +292,7 @@ function render() {
   $('demo-note').hidden = !profile.demo;
   renderAtlas();
   $('domain-nav').replaceChildren(...summary.domains.map(domain => {
-    const button = el('button', 'domain-tab', shortNames[domain.id]);
+    const button = el('button', 'domain-tab', domain.name);
     button.type = 'button'; button.dataset.domain = domain.id;
     button.addEventListener('click', () => navigate(domain.id));
     return button;

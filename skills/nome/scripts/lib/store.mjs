@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { randomUUID } from 'node:crypto';
-import { assert, fail, newStore, validateStore, validateRequest, applyOperations, requestAuthorization, keys, id } from './model.mjs';
+import { assert, fail, newStore, upgradeStore, validateStore, validateRequest, applyOperations, requestAuthorization, keys, id } from './model.mjs';
 
 export const resolveDataDir = value => path.resolve(value || process.env.NOME_DATA_DIR || path.join(os.homedir(), '.nome'));
 export async function readStore(dataDir) {
@@ -11,8 +11,8 @@ export async function readStore(dataDir) {
   catch (error) { if (error.code === 'ENOENT') return newStore(); throw error; }
   let store;
   try { store = JSON.parse(raw); } catch { fail('CORRUPT_STORE', '档案 JSON 已损坏；请保留原文件并检查，NOME 未覆盖它。'); }
-  validateStore(store);
-  return store;
+  // Compatibility is in memory only; reads never rewrite a user's original file.
+  return upgradeStore(store);
 }
 export async function atomicWrite(dataDir, store) {
   validateStore(store);

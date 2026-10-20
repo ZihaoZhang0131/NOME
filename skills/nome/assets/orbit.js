@@ -1,15 +1,16 @@
 // Art-directed solar system, not astronomical scale or personal-profile scores.
 // One shared projection drives both the track and the moving body.
 export const sunRadius = 76;
+export const planetDiameter = 44;
 export const sharedOrbit = { radius: 220, inclination: 67, tilt: -18, period: 120000 };
 export const orbits = [
-  { diameter: 28, texture: 'mercury', name: '水星' },
-  { diameter: 40, texture: 'venus_atmosphere', name: '金星' },
-  { diameter: 44, texture: 'earth_daymap', name: '地球' },
-  { diameter: 34, texture: 'mars', name: '火星' },
-  { diameter: 65, texture: 'jupiter', name: '木星' },
-  { diameter: 53, texture: 'saturn', name: '土星' }
-].map((body, index) => ({ ...sharedOrbit, ...body, phase: -8 + index * 60 }));
+  { texture: 'mercury', name: '水星' },
+  { texture: 'venus_atmosphere', name: '金星' },
+  { texture: 'earth_daymap', name: '地球' },
+  { texture: 'mars', name: '火星' },
+  { texture: 'jupiter', name: '木星' },
+  { texture: 'saturn', name: '土星' }
+].map((body, index) => ({ ...sharedOrbit, ...body, diameter: planetDiameter, phase: -8 + index * 60 }));
 export function projectOrbit(index, angle) {
   const orbit = orbits[index];
   const inclination = orbit.inclination * Math.PI / 180;

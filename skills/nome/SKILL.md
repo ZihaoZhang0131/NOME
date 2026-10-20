@@ -33,7 +33,7 @@ If a request combines advice and an explicit update, perform only that scoped up
 
 ## Using the profile
 
-Read the smallest relevant scope with `read --domain <domain>`; repeat for another domain only if useful. The six domains are `context`, `experience`, `goals`, `values`, `constraints`, and `preferences`. Ordinary reads exclude saved drafts and domains marked “暂不提供／不适用”. Do not load history or every source document by default.
+Read the smallest relevant scope with `read --domain <domain>`; repeat for another domain only if useful. The six domains are `identity`, `motivation`, `traits`, `capabilities`, `relationships`, and `growth`. Use [domains.md](references/domains.md) before extracting or classifying facts. Keep ambiguous facts in `unclassified`; they are excluded from ordinary advice. This is a self-understanding profile, not personality scoring, levels, or a task game. Ordinary reads exclude saved drafts and domains marked “暂不提供／不适用”. Do not load history or every source document by default.
 
 - Confirmed records are user statements, not proof of objective ability. Imported memories and inferences remain hypotheses until confirmed. For material decisions, check any old or conflicting information rather than silently updating it.
 - The user's current explicit statement takes priority in this answer. If it contradicts the profile, explain the uncertainty briefly and use the current statement; only persist the correction when requested.

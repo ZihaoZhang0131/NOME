@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { profileView } from '../skills/nome/assets/profile-view.js';
 
 const fixture = () => ({
-  domains: ['context', 'experience', 'goals', 'values', 'constraints', 'preferences'].map(id => ({ id, state: 'active' })),
+  domains: ['identity', 'motivation', 'traits', 'capabilities', 'relationships', 'growth'].map(id => ({ id, state: 'active' })),
   records: [], drafts: []
 });
 const record = (id, domain, status = 'confirmed') => ({ id, domain, status, content: id });
@@ -18,8 +18,8 @@ test('empty atlas shows six unexplored domains without invented records', () => 
 });
 test('coverage counts domains once, keeps imports and drafts unconfirmed and prefers confirmed previews', () => {
   const profile = fixture();
-  profile.records = [record('old', 'context', 'imported'), record('now', 'context'), record('more', 'context'), record('memory', 'experience', 'imported')];
-  profile.drafts = [record('interview', 'goals', 'inferred')];
+  profile.records = [record('old', 'identity', 'imported'), record('now', 'identity'), record('more', 'identity'), record('memory', 'motivation', 'imported')];
+  profile.drafts = [record('interview', 'traits', 'inferred')];
   const result = profileView(profile);
   assert.equal(result.known, 1); assert.equal(result.remaining, 5);
   assert.equal(result.records, 4); assert.equal(result.drafts, 1);
@@ -31,8 +31,8 @@ test('coverage counts domains once, keeps imports and drafts unconfirmed and pre
 test('skipped domains never expose content even if a caller supplies it', () => {
   const profile = fixture();
   profile.domains[0].state = 'withheld'; profile.domains[1].state = 'not_applicable';
-  profile.records = [record('private', 'context'), record('irrelevant', 'experience')];
-  profile.drafts = [record('private-draft', 'context', 'inferred')];
+  profile.records = [record('private', 'identity'), record('irrelevant', 'motivation')];
+  profile.drafts = [record('private-draft', 'identity', 'inferred')];
   const result = profileView(profile);
   assert.equal(result.skipped, 2); assert.equal(result.known, 0); assert.equal(result.remaining, 4);
   assert.equal(result.records, 0); assert.equal(result.drafts, 0);

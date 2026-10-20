@@ -24,7 +24,8 @@ const HELP = `NOME ${VERSION} · 本地个人档案
 
 通用：--data-dir DIR（默认 NOME_DATA_DIR 或 ~/.nome）
 安装/来源/检查：--home DIR（供隔离安装或测试）
-领域：context, experience, goals, values, constraints, preferences
+领域：identity, motivation, traits, capabilities, relationships, growth
+待分类资料：read --domain unclassified（不属于第七领域，不用于日常建议）
 修改协议与完整示例：references/protocol.md
 `;
 function output(value) { process.stdout.write(`${JSON.stringify(value, null, 2)}\n`); }

@@ -1,19 +1,110 @@
 {
   "domains": {
-    "context": { "state": "active", "updatedAt": null },
-    "experience": { "state": "active", "updatedAt": null },
-    "goals": { "state": "active", "updatedAt": null },
-    "values": { "state": "active", "updatedAt": null },
-    "constraints": { "state": "withheld", "updatedAt": "2026-01-10T08:00:00.000Z" },
-    "preferences": { "state": "active", "updatedAt": null }
+    "identity": {
+      "state": "active",
+      "updatedAt": null
+    },
+    "motivation": {
+      "state": "active",
+      "updatedAt": null
+    },
+    "traits": {
+      "state": "active",
+      "updatedAt": null
+    },
+    "capabilities": {
+      "state": "active",
+      "updatedAt": null
+    },
+    "relationships": {
+      "state": "active",
+      "updatedAt": null
+    },
+    "growth": {
+      "state": "active",
+      "updatedAt": null
+    }
   },
   "records": [
-    { "id": "demo-context", "domain": "context", "content": "目前在做产品设计，也在探索独立创作。希望工作与生活都留一点余地。", "source": { "type": "user", "reference": "虚构人物的示例回答" }, "status": "confirmed", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": "2026-01-10T08:00:00.000Z" },
-    { "id": "demo-experience", "domain": "experience", "content": "曾参与一个社区阅读项目，可能擅长把复杂信息整理成清晰的内容。", "source": { "type": "codex-memory", "reference": "虚构的旧记忆摘要" }, "status": "imported", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": null },
-    { "id": "demo-goal", "domain": "goals", "content": "接下来三个月，完成一个能给真实用户使用的小作品。先跑通，再决定是否投入更多时间。", "source": { "type": "user", "reference": "虚构人物的示例回答" }, "status": "confirmed", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": "2026-01-10T08:00:00.000Z" },
-    { "id": "demo-preference", "domain": "preferences", "content": "先给出具体建议，再解释原因。遇到不同意见可以直接指出，但请说明依据。", "source": { "type": "user", "reference": "虚构人物的示例回答" }, "status": "confirmed", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": "2026-01-10T08:00:00.000Z" }
+    {
+      "id": "demo-identity",
+      "domain": "identity",
+      "content": "目前在做产品设计，也在探索独立创作，正处于从团队工作转向自主项目的阶段。",
+      "source": {
+        "type": "user",
+        "reference": "虚构人物的示例回答"
+      },
+      "status": "confirmed",
+      "createdAt": "2026-01-10T08:00:00.000Z",
+      "updatedAt": "2026-01-10T08:00:00.000Z",
+      "confirmedAt": "2026-01-10T08:00:00.000Z"
+    },
+    {
+      "id": "demo-motivation",
+      "domain": "motivation",
+      "content": "希望做出能被真实用户使用的小作品；比起扩大规模，我更看重自主与持续投入。",
+      "source": {
+        "type": "user",
+        "reference": "虚构人物的示例回答"
+      },
+      "status": "confirmed",
+      "createdAt": "2026-01-10T08:00:00.000Z",
+      "updatedAt": "2026-01-10T08:00:00.000Z",
+      "confirmedAt": "2026-01-10T08:00:00.000Z"
+    },
+    {
+      "id": "demo-traits",
+      "domain": "traits",
+      "content": "习惯先做一个小版本再讨论。沟通时喜欢具体建议，也欢迎说明依据的不同意见。",
+      "source": {
+        "type": "user",
+        "reference": "虚构人物的示例回答"
+      },
+      "status": "confirmed",
+      "createdAt": "2026-01-10T08:00:00.000Z",
+      "updatedAt": "2026-01-10T08:00:00.000Z",
+      "confirmedAt": "2026-01-10T08:00:00.000Z"
+    },
+    {
+      "id": "demo-capabilities",
+      "domain": "capabilities",
+      "content": "曾参与一个社区阅读项目，负责整理资料并完成导览；这段实践可能体现了信息组织能力，仍待本人核实。",
+      "source": {
+        "type": "codex-memory",
+        "reference": "虚构的旧记忆摘要"
+      },
+      "status": "imported",
+      "createdAt": "2026-01-10T08:00:00.000Z",
+      "updatedAt": "2026-01-10T08:00:00.000Z",
+      "confirmedAt": null
+    },
+    {
+      "id": "demo-relationships",
+      "domain": "relationships",
+      "content": "一位一起做阅读项目的朋友，是虚构人物重要的讨论伙伴；也与社区阅读小组保持连接。",
+      "source": {
+        "type": "user",
+        "reference": "虚构人物的示例回答"
+      },
+      "status": "confirmed",
+      "createdAt": "2026-01-10T08:00:00.000Z",
+      "updatedAt": "2026-01-10T08:00:00.000Z",
+      "confirmedAt": "2026-01-10T08:00:00.000Z"
+    }
   ],
   "drafts": [
-    { "id": "demo-draft", "domain": "values", "content": "正在思考：自主安排时间和收入稳定，现阶段更看重哪一个。", "source": { "type": "user", "reference": "虚构的问答进度" }, "status": "inferred", "createdAt": "2026-01-10T08:00:00.000Z", "updatedAt": "2026-01-10T08:00:00.000Z", "confirmedAt": null }
+    {
+      "id": "demo-growth",
+      "domain": "growth",
+      "content": "正在回看一次项目受挫的经历：从急于一次做好，逐渐转向先试验、再调整。",
+      "source": {
+        "type": "user",
+        "reference": "虚构人物的示例回答"
+      },
+      "status": "inferred",
+      "createdAt": "2026-01-10T08:00:00.000Z",
+      "updatedAt": "2026-01-10T08:00:00.000Z",
+      "confirmedAt": null
+    }
   ]
 }

@@ -11,7 +11,7 @@ export async function temporary(t) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nome-test-'));
   t.after(() => fs.rm(root, { recursive: true, force: true })); return root;
 }
-export const record = (overrides = {}) => ({ id: 'learning-time', domain: 'constraints', content: '每周可以学习 4 小时。', source: { type: 'user' }, status: 'confirmed', ...overrides });
+export const record = (overrides = {}) => ({ id: 'learning-time', domain: 'identity', content: '每周可以学习 4 小时。', source: { type: 'user' }, status: 'confirmed', ...overrides });
 export function request(revision = 0, records = [record()], { intent = 'update', confirmed = true, target } = {}) {
   return { baseRevision: revision, authorization: { userRequested: true, intent, confirmed }, operations: records.map(r => ({ type: 'upsert', ...(target ? { target } : {}), record: r })) };
 }

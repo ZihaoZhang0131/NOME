@@ -3,7 +3,7 @@ export function cameraPose({ viewportWidth, viewportHeight, left, top, width, he
   const mobile = viewportWidth <= 760;
   const visualWidth = mobile ? Math.min(viewportWidth * .64, viewportHeight * .28) : Math.min(viewportWidth * .36, viewportHeight * .58, 520);
   const bodyWidth = visualWidth;
-  const scale = bodyWidth / (diameter * width / 600 * point.scale);
+  const scale = bodyWidth / (diameter * width / 600);
   const targetX = viewportWidth * (mobile ? .5 : .255);
   const targetY = viewportHeight * (mobile ? .205 : .5);
   const x = width / 2 + point.x * width / 600;

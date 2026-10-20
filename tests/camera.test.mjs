@@ -17,7 +17,9 @@ test('camera keeps every selected body in the reading area across viewports and 
         const y = top + pose.y + (height / 2 + point.y * width / 600) * pose.scale;
         assert.ok(Math.abs(x - viewportWidth * (mobile ? .5 : .255)) < 1e-8);
         assert.ok(Math.abs(y - viewportHeight * (mobile ? .205 : .5)) < 1e-8);
-        const radius = orbit.diameter * width / 600 * point.scale * pose.scale / 2;
+        const radius = orbit.diameter * width / 600 * pose.scale / 2;
+        const expectedWidth = mobile ? Math.min(viewportWidth * .64, viewportHeight * .28) : Math.min(viewportWidth * .36, viewportHeight * .58, 520);
+        assert.ok(Math.abs(radius * 2 - expectedWidth) < 1e-8);
         assert.ok(x - radius >= 0 && x + radius <= viewportWidth * (mobile ? 1 : .52));
         assert.ok(y - radius >= 0 && y + radius < viewportHeight * (mobile ? .4 : 1));
       }

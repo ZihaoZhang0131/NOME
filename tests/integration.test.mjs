@@ -102,10 +102,10 @@ test('read-only server reflects actual updates and rejects HTTP writes and cross
   assert.ok(current.records[0].content.includes('<script>'));
   await fetch(`${running.url}/api/profile`); await fetch(`${running.url}/health`);
   assert.deepEqual(await fs.readFile(path.join(dir, 'store.json')), before);
-  const skip = request(1); skip.operations = [{ type: 'domain', domain: 'constraints', state: 'withheld' }];
+  const skip = request(1); skip.operations = [{ type: 'domain', domain: 'identity', state: 'withheld' }];
   await applyRequest(dir, skip);
   const hidden = await (await fetch(`${running.url}/api/profile`)).json();
-  assert.equal(hidden.records.length, 0); assert.equal(hidden.domains.find(d => d.id === 'constraints').state, 'withheld');
+  assert.equal(hidden.records.length, 0); assert.equal(hidden.domains.find(d => d.id === 'identity').state, 'withheld');
 });
 test('occupied ports fall back and demo never reads even a corrupt personal profile', async t => {
   const dir = await temporary(t); await fs.writeFile(path.join(dir, 'store.json'), 'broken');
@@ -126,7 +126,7 @@ test('CLI parses payload files, validates flags and reports corruption with a no
   const root = await temporary(t); const dir = path.join(root, 'data'); const file = path.join(root, 'change.json');
   await fs.writeFile(file, JSON.stringify(request()));
   assert.equal(JSON.parse((await cli(['apply', '--file', file, '--data-dir', dir])).stdout).revision, 1);
-  assert.equal(JSON.parse((await cli(['read', '--domain', 'constraints', '--data-dir', dir])).stdout).records.length, 1);
+  assert.equal(JSON.parse((await cli(['read', '--domain', 'identity', '--data-dir', dir])).stdout).records.length, 1);
   await assert.rejects(cli(['read', '--demo', '--data-dir', dir]));
   await assert.rejects(cli(['apply', '--data-dir', dir]));
   await fs.writeFile(path.join(dir, 'store.json'), 'broken');
